@@ -6,6 +6,7 @@ import Cookies from 'js-cookie';
 import bg from '../../images/1.jpg'
 import CreateNotification from '../../Functions/Notification'
 import generator from '../../Functions/Random'
+import { API_URL } from '../../config'
 
 export default function Home() {
   const historyRouter = useHistory();
@@ -55,7 +56,7 @@ export default function Home() {
 
 
     Axios.post(
-      "https://ocwa.herokuapp.com/getuser",
+      `${API_URL}/getuser`,
       {
         jwtToken: Cookies.get('jwt'),
       })

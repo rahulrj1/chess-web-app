@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:5.0
+    container_name: chess-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - chess-network
+
+  # Backend Server
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: chess-server
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - DB_CONNECT=mongodb://mongodb:27017/chess
+      - TOKEN=your_jwt_secret_key_change_this
+      - FRONTEND=http://localhost:3000
+    depends_on:
+      - mongodb
+    networks:
+      - chess-network
+
+  # Frontend React App
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chess-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:5000
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+    depends_on:
+      - server
+    networks:
+      - chess-network
+    stdin_open: true
+    tty: true
+
+networks:
+  chess-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:

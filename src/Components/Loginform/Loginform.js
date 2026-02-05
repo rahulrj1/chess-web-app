@@ -4,6 +4,7 @@ import "./loginForm.css";
 import Axios from 'axios';
 import Cookies from 'js-cookie';
 import bg from '../../images/1.jpg';
+import { API_URL } from '../../config';
 
 export default function Loginform() {
     const historyRouter = useHistory();
@@ -33,7 +34,7 @@ export default function Loginform() {
         e.preventDefault();
 
         Axios.post(
-            "https://ocwa.herokuapp.com/users/login",
+            `${API_URL}/users/login`,
             {
                 id: loginPlayerId,
                 password: loginPlayerPassword,
@@ -54,7 +55,7 @@ export default function Loginform() {
         <div className="login_screen" style={{ backgroundImage: `url(${bg})`, backgroundRepeat: 'no-repeat', backgroundSize: 'cover' }}>
             <div id="container">
                 <div className="form-container sign-up-container">
-                    <form method="POST" action="https://ocwa.herokuapp.com/users/register">
+                    <form method="POST" action={`${API_URL}/users/register`}>
                         <h1>Create Account</h1>
                         <input type="text" name="name" placeholder="Name" value={playerName} onChange={(e) => { setPlayerName(e.target.value) }} required />
                         <input type="text" name="id" placeholder="Username" value={playerId} onChange={(e) => { setPlayerId(e.target.value) }} required />

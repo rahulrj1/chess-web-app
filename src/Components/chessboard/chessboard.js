@@ -9,6 +9,7 @@ import Axios from "axios"
 import Cookies from 'js-cookie';
 
 import Tile from "../tile/tile"
+import { API_URL } from '../../config'
 
 let horizontalAxis = ["a", "b", "c", "d", "e", "f", "g", "h"]
 let verticalAxis = ["1", "2", "3", "4", "5", "6", "7", "8"]
@@ -78,7 +79,7 @@ function Chessboard() {
 
     useEffect(() => {
         Axios.post(
-            "https://ocwa.herokuapp.com/getuser",
+            `${API_URL}/getuser`,
             {
                 jwtToken: Cookies.get('jwt'),
             })
@@ -114,7 +115,7 @@ function Chessboard() {
     }, [user,opponentUser,socket])
 
     useEffect(() => {
-        const s = io(`https://ocwa.herokuapp.com`);
+        const s = io(API_URL);
         setSocket(s);
         s.emit('join', roomId, pieces);
         s.on('room-full', (roomId) => {
@@ -503,7 +504,7 @@ function Chessboard() {
 
                             e.preventDefault();
                             Axios.post(
-                                "https://ocwa.herokuapp.com/deleteboard",
+                                `${API_URL}/deleteboard`,
                                 {
                                     jwtToken: Cookies.get('jwt'),
                                     roomId: roomId,
