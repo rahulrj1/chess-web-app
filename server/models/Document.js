@@ -1,12 +1,29 @@
-const {Schema, model} = require('mongoose');
+const { Schema, model } = require('mongoose');
 
+const DocumentSchema = new Schema({
+    _id: {
+        type: String,
+        required: true
+    },
+    data: {
+        type: Object,
+        required: true
+    },
+    chance: {
+        type: String,
+        enum: ['white', 'black'],
+        default: 'white'
+    },
+    black: {
+        type: String,
+        default: null
+    },
+    white: {
+        type: String,
+        default: null
+    }
+}, {
+    timestamps: true
+});
 
-const Document = new Schema({
-    _id: String,
-    data: Object,
-    chance: String,
-    black: String,
-    white: String,
-})
-
-module.exports = model('Document', Document);
+module.exports = model('Document', DocumentSchema);

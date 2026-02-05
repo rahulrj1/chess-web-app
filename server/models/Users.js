@@ -1,31 +1,45 @@
-const {Schema, model} = require('mongoose');
-const { isEmail }  = require('validator');
+const { Schema, model } = require('mongoose');
+const { isEmail } = require('validator');
 
-const Users = new Schema({
+const UserSchema = new Schema({
     playerName: {
         type: String,
-        required: [true, 'please enter your name']
+        required: [true, 'Please enter your name'],
+        trim: true,
+        maxlength: [50, 'Name cannot exceed 50 characters']
     },
     playerId: {
         type: String,
-        unique: [true, 'Please enter a unique playerid'],
-        required: true
+        unique: true,
+        required: [true, 'Please enter a unique player ID'],
+        trim: true,
+        lowercase: true,
+        index: true
     },
     playerEmailId: {
         type: String,
-        required: true,
+        required: [true, 'Please enter an email'],
+        unique: true,
         lowercase: true,
-        validate: [isEmail ,'Email is not valid'], 
+        trim: true,
+        validate: [isEmail, 'Please enter a valid email'],
+        index: true
     },
     playerPassword: {
-        type: String, 
-        minlength: [6, 'Password must be at least 6 characters long'],
-        required: [true, 'Please enter a password']
+        type: String,
+        required: [true, 'Please enter a password'],
+        minlength: [6, 'Password must be at least 6 characters']
     },
     playerRating: {
-        type: Number, 
-        default: 1200
+        type: Number,
+        default: 1200,
+        min: [0, 'Rating cannot be negative']
     }
-})
+}, {
+    timestamps: true
+});
 
-module.exports = model('Users', Users);
+// Compound index for common queries
+UserSchema.index({ playerEmailId: 1, playerId: 1 });
+
+module.exports = model('User', UserSchema);
