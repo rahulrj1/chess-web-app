@@ -75,13 +75,21 @@ export default function Home() {
     const signInButton = document.getElementById('signIn');
     const container = document.getElementById('container');
 
-    signUpButton.addEventListener('click', () => {
+    const handleSignUp = () => {
       container.classList.add("right-panel-active");
-    });
+    };
 
-    signInButton.addEventListener('click', () => {
+    const handleSignIn = () => {
       container.classList.remove("right-panel-active");
-    });
+    };
+
+    signUpButton?.addEventListener('click', handleSignUp);
+    signInButton?.addEventListener('click', handleSignIn);
+
+    return () => {
+      signUpButton?.removeEventListener('click', handleSignUp);
+      signInButton?.removeEventListener('click', handleSignIn);
+    };
   }, [])
 
   return (
