@@ -63,19 +63,19 @@ export default class checkMove {
                         
                 }
 
-                else if(p.type==="bisop"){
+                else if(p.type==="bishop"){
 
                     for(let i=0;i<=7;i++){
-                        if(this.isValidMove(p.x,p.y,p.x-i,p.y+i,"bisop",p.color,pieces,p.color)){
+                        if(this.isValidMove(p.x,p.y,p.x-i,p.y+i,"bishop",p.color,pieces,p.color)){
                             flag = true;
                         }
-                        if(this.isValidMove(p.x,p.y,p.x+i,p.y+i,"bisop",p.color,pieces,p.color)){
+                        if(this.isValidMove(p.x,p.y,p.x+i,p.y+i,"bishop",p.color,pieces,p.color)){
                             flag = true;
                         }
-                        if(this.isValidMove(p.x,p.y,p.x-i,p.y-i,"bisop",p.color,pieces,p.color)){
+                        if(this.isValidMove(p.x,p.y,p.x-i,p.y-i,"bishop",p.color,pieces,p.color)){
                             flag = true;
                         }
-                        if(this.isValidMove(p.x,p.y,p.x+i,p.y-i,"bisop",p.color,pieces,p.color)){
+                        if(this.isValidMove(p.x,p.y,p.x+i,p.y-i,"bishop",p.color,pieces,p.color)){
                             flag = true;
                         }
                     }
@@ -93,19 +93,19 @@ export default class checkMove {
                         }
                     }
 
-                    //bisop
+                    //bishop
 
                     for(let i=0;i<=7;i++){
-                        if(this.isValidMove(p.x,p.y,p.x-i,p.y+i,"bisop",p.color,pieces,p.color)){
+                        if(this.isValidMove(p.x,p.y,p.x-i,p.y+i,"bishop",p.color,pieces,p.color)){
                             flag = true;
                         }
-                        if(this.isValidMove(p.x,p.y,p.x+i,p.y+i,"bisop",p.color,pieces,p.color)){
+                        if(this.isValidMove(p.x,p.y,p.x+i,p.y+i,"bishop",p.color,pieces,p.color)){
                             flag = true;
                         }
-                        if(this.isValidMove(p.x,p.y,p.x-i,p.y-i,"bisop",p.color,pieces,p.color)){
+                        if(this.isValidMove(p.x,p.y,p.x-i,p.y-i,"bishop",p.color,pieces,p.color)){
                             flag = true;
                         }
-                        if(this.isValidMove(p.x,p.y,p.x+i,p.y-i,"bisop",p.color,pieces,p.color)){
+                        if(this.isValidMove(p.x,p.y,p.x+i,p.y-i,"bishop",p.color,pieces,p.color)){
                             flag = true;
                         }
                     }
