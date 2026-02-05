@@ -104,15 +104,20 @@ function Chessboard() {
     }, [user,opponentUser,socket])
 
     useEffect(() => {
-        
         if (socket === null) {
             return;
         }
-        socket.on("recieve-opponent-info",(oppo)=>{
+        
+        const handleOpponentInfo = (oppo) => {
             setOpponentUser(oppo);
-        });
-       
-    }, [user,opponentUser,socket])
+        };
+        
+        socket.on("recieve-opponent-info", handleOpponentInfo);
+        
+        return () => {
+            socket.off("recieve-opponent-info", handleOpponentInfo);
+        };
+    }, [socket])
 
     useEffect(() => {
         const s = io(API_URL);
@@ -128,72 +133,93 @@ function Chessboard() {
     }, []);
 
     useEffect(() => {
-
         if (socket === null) {
             return;
         }
-        socket.on("receive-update-checkmate", (loseColor) => {
+        
+        const handleCheckmate = (loseColor) => {
             const winColor = loseColor === "black" ? "white" : "black";
-                setMessage(`It's checkmate !! Player with ${winColor} Wins Game`);
-        })
-
-    },[pieces,socket])
+            setMessage(`It's checkmate !! Player with ${winColor} Wins Game`);
+        };
+        
+        socket.on("receive-update-checkmate", handleCheckmate);
+        
+        return () => {
+            socket.off("receive-update-checkmate", handleCheckmate);
+        };
+    }, [socket])
 
     useEffect(() => {
-
         if (socket === null) {
             return;
         }
-        socket.on("receive-update-stalemate", () => {
-                setMessage("It's a stalemate");
-        })
-
-    }, [pieces, socket])
+        
+        const handleStalemate = () => {
+            setMessage("It's a stalemate");
+        };
+        
+        socket.on("receive-update-stalemate", handleStalemate);
+        
+        return () => {
+            socket.off("receive-update-stalemate", handleStalemate);
+        };
+    }, [socket])
 
     useEffect(() => {
-
         if (socket === null) {
             return;
         }
-        socket.on('opponent-left', () => {
+        
+        const handleOpponentLeft = () => {
             console.log("Your opponent left");
             setMessage("Your opponent left");
-        })
-
-    } , [pieces, socket])
+        };
+        
+        socket.on('opponent-left', handleOpponentLeft);
+        
+        return () => {
+            socket.off('opponent-left', handleOpponentLeft);
+        };
+    }, [socket])
 
         
 
     
     useEffect(() => {
-
         if (socket === null) {
             return;
         }
-        socket.on('recieve-pieces', (recivedPieces, opponentColor) => {
-            if (recivedPieces !== pieces) {
-                setWhoseChanceItIs(opponentColor);
-                setPieces(recivedPieces);
-            }
-        })
-
-
-    }, [pieces, socket]);
+        
+        const handleReceivePieces = (receivedPieces, opponentColor) => {
+            setWhoseChanceItIs(opponentColor);
+            setPieces(receivedPieces);
+        };
+        
+        socket.on('recieve-pieces', handleReceivePieces);
+        
+        return () => {
+            socket.off('recieve-pieces', handleReceivePieces);
+        };
+    }, [socket]);
 
     useEffect(() => {
-
         if (socket === null) {
             return;
         }
-        socket.on('load-chessboard', (data, chance, blackemail, whiteemail) => {
-            console.log(user.playerEmailId);
+        
+        const handleLoadChessboard = (data, chance, blackemail, whiteemail) => {
             setPieces(data);
             setWhoseChanceItIs(chance);
             setB_mail(blackemail);
             setW_mail(whiteemail);
-        })
-
-    }, [pieces, socket]);
+        };
+        
+        socket.on('load-chessboard', handleLoadChessboard);
+        
+        return () => {
+            socket.off('load-chessboard', handleLoadChessboard);
+        };
+    }, [socket]);
 
     useEffect(() => {
         if (b_mail === user.playerEmailId) { setYourColor("black"); }
@@ -206,11 +232,18 @@ function Chessboard() {
         if (socket === null) {
             return;
         }
-        socket.on('player-color', (playerColor) => {
+        
+        const handlePlayerColor = (playerColor) => {
             setYourColor(playerColor);
             socket.emit('save-my-color', user.playerEmailId, playerColor);
-        })
-    }, [user, socket])
+        };
+        
+        socket.on('player-color', handlePlayerColor);
+        
+        return () => {
+            socket.off('player-color', handlePlayerColor);
+        };
+    }, [socket, user.playerEmailId])
 
     const checkMove = new CheckMove();
 
