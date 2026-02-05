@@ -35,7 +35,7 @@ services:
   # Frontend React App
   frontend:
     build:
-      context: .
+      context: ./client
       dockerfile: Dockerfile
     container_name: chess-frontend
     restart: unless-stopped
@@ -45,8 +45,8 @@ services:
       - REACT_APP_API_URL=http://localhost:5000
       - CHOKIDAR_USEPOLLING=true
     volumes:
-      - ./src:/app/src
-      - ./public:/app/public
+      - ./client/src:/app/src
+      - ./client/public:/app/public
     depends_on:
       - server
     networks:
