@@ -86,13 +86,15 @@ function Chessboard() {
             .then((res) => {
                 if (res.data.msg === 'verified') {
                     setUser(res.data.user);
-                }
-                else {
+                } else {
                     history.push("/");
                 }
             })
-
-    }, []);
+            .catch((err) => {
+                console.error("Error verifying user:", err);
+                history.push("/");
+            });
+    }, [history]);
 
     useEffect(() => {
         if (socket === null) {
@@ -534,7 +536,6 @@ function Chessboard() {
                            
                     </div>
                         <button className="button" onClick={(e) => {
-
                             e.preventDefault();
                             Axios.post(
                                 `${API_URL}/deleteboard`,
@@ -542,9 +543,11 @@ function Chessboard() {
                                     jwtToken: Cookies.get('jwt'),
                                     roomId: roomId,
                                 })
+                                .catch((err) => {
+                                    console.error("Error deleting board:", err);
+                                });
                             socket.emit('user-left');
-                            
-                            window.location.href = "https://chessiiti.netlify.app/chessgame/";
+                            history.push('/chessgame');
                         }}>Exit</button>
                     </div>
 

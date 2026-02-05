@@ -52,8 +52,6 @@ export default function Home() {
   });
 
   useEffect(() => {
-
-
     Axios.post(
       `${API_URL}/getuser`,
       {
@@ -62,19 +60,15 @@ export default function Home() {
       .then((res) => {
         if (res.data.msg === 'verified') {
           setUser(res.data.user);
-          // CreateNotification({
-          //   title:  "Successful signin",
-          //   message: "TEST",
-          //   type: "success",
-          //   time : 5000,
-          // }) 
-        }
-        else {
+        } else {
           historyRouter.push('/');
         }
       })
-
-  }, []);
+      .catch((err) => {
+        console.error("Error verifying user:", err);
+        historyRouter.push('/');
+      });
+  }, [historyRouter]);
 
   useEffect(() => {
     const signUpButton = document.getElementById('signUp');

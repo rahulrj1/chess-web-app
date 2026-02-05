@@ -30,8 +30,11 @@ export default function Loginform() {
         });
     }, [])
 
+    const [loginError, setLoginError] = useState("");
+
     const handleLoginSubmit = (e) => {
         e.preventDefault();
+        setLoginError("");
 
         Axios.post(
             `${API_URL}/users/login`,
@@ -42,10 +45,15 @@ export default function Loginform() {
         )
             .then((res) => {
                 if (res.data.msg === 'logsuc') {
-                    Cookies.set('jwt', res.data.token)
-                    console.log(Cookies.get());
+                    Cookies.set('jwt', res.data.token);
+                    historyRouter.push('/chessgame');
+                } else {
+                    setLoginError(res.data.msg || "Login failed");
                 }
-                historyRouter.push('/chessgame');
+            })
+            .catch((err) => {
+                console.error("Login error:", err);
+                setLoginError("Server error. Please try again.");
             })
 
 
@@ -69,7 +77,7 @@ export default function Loginform() {
                         <h1>Sign in</h1>
                         <input type="text" name="id" placeholder="Username" value={loginPlayerId} onChange={(e) => { setLoginPlayerId(e.target.value) }} required />
                         <input type="password" name="password" placeholder="Password" value={loginPlayerPassword} onChange={(e) => { setLoginPlayerPassword(e.target.value) }} required />
-                        <a href="#">Forgot your password?</a>
+                        {loginError && <p style={{ color: 'red', fontSize: '14px' }}>{loginError}</p>}
                         <button>Sign In</button>
                     </form>
                 </div>
