@@ -168,27 +168,28 @@ app.post('/users/login', async (req, res) => {
 
 // Delete Chessboard
 app.post('/deleteboard', (req, res) => {
-
     const token = req.body.jwtToken;
 
-    if (token) {
-        jwt.verify(token, process.env.TOKEN, async (err, decodedToken) => {
-            if (err) {
-                console.log(err.message);
-                res.status(400);
-            }
-            else {
-                console.log(decodedToken);
-                const room = req.body.roomId;
-                let board = await Document.findById(room);
-                board.delete();
-                res.status(200);
-            }
-        });
+    if (!token) {
+        return res.status(400).json({ msg: 'Token required' });
     }
-    else {
-        res.status(400);
-    }
+
+    jwt.verify(token, process.env.TOKEN, async (err, decodedToken) => {
+        if (err) {
+            console.log(err.message);
+            return res.status(400).json({ msg: 'Invalid token' });
+        }
+
+        const room = req.body.roomId;
+        const board = await Document.findById(room);
+        
+        if (!board) {
+            return res.status(404).json({ msg: 'Board not found' });
+        }
+        
+        await board.delete();
+        res.status(200).json({ msg: 'Board deleted' });
+    });
 })
 
 http.listen(process.env.PORT, () => console.log(`Server Running on port ${process.env.PORT}`));
@@ -252,7 +253,7 @@ io.on('connection', socket => {
             doc.chance = newChance;
             if (newChance === "white" && doc.black === null) { doc.black = playeremail; }
             if (newChance === "black" && doc.white === null) { doc.white = playeremail; }
-            doc.save();
+            await doc.save();
         })
 
         socket.on("game-end-checkmate", async (loseColor) => {
@@ -274,19 +275,16 @@ io.on('connection', socket => {
                 whiteUserInfo.playerRating = whiteUserInfo.playerRating + 10;
                 blackUserInfo.playerRating = blackUserInfo.playerRating - 10;
             }
-            console.log('above save info');
-            whiteUserInfo.save();
-            blackUserInfo.save();
-            console.log('above doc delete');
-            doc.delete();
+            await whiteUserInfo.save();
+            await blackUserInfo.save();
+            await doc.delete();
 
             socket.to(roomId).emit("receive-update-checkmate", loseColor);
         })
 
         socket.on("game-end-stalemate", async () => {
-
             let doc = await Document.findById(roomId);
-            doc.delete();
+            await doc.delete();
             socket.to(roomId).emit("receive-update-stalemate");
         })
 
