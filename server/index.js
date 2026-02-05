@@ -19,7 +19,6 @@ const multer = require('multer');
 const upload = multer();
 
 const jwt = require('jsonwebtoken');
-const { requireAuth, checkUser } = require('./verifyToken');
 
 // MongoDB Connection
 mongoose.connect(process.env.DB_CONNECT, {

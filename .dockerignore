@@ -1,0 +1,8 @@
+node_modules
+build
+.git
+.gitignore
+.env
+*.md
+.DS_Store
+server/node_modules

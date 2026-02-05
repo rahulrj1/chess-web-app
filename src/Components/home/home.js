@@ -4,7 +4,6 @@ import Axios from "axios"
 import "./home.css"
 import Cookies from 'js-cookie';
 import bg from '../../images/1.jpg'
-import CreateNotification from '../../Functions/Notification'
 import generator from '../../Functions/Random'
 import { API_URL } from '../../config'
 
