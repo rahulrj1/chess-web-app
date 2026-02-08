@@ -6,7 +6,7 @@
 import React, { useMemo } from 'react';
 import './Tile.css';
 
-function Tile({ pieces, row, col, activeTile }) {
+function Tile({ pieces, row, col, activeTile, onDragStart, onDragOver, onDrop }) {
     const piece = useMemo(() => {
         return pieces.find(p => p.x === row && p.y === col) || null;
     }, [pieces, row, col]);
@@ -20,11 +20,17 @@ function Tile({ pieces, row, col, activeTile }) {
     const tileClass = `tile ${isDark ? 'black-tile' : 'white-tile'}${isHighlighted ? ' highlighted' : ''}`;
 
     return (
-        <div className={tileClass}>
+        <div 
+            className={tileClass}
+            onDragOver={(e) => onDragOver(e, row, col)}
+            onDrop={(e) => onDrop(e, row, col)}
+        >
             {piece && (
                 <div
                     style={{ backgroundImage: `url(${piece.image})` }}
                     className="chess-piece"
+                    draggable={true}
+                    onDragStart={(e) => onDragStart(e, piece)}
                 />
             )}
         </div>

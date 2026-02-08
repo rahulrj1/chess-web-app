@@ -9,37 +9,35 @@ import { useAuth } from '../../context';
 import { gameApi } from '../../api';
 import useSocket from '../../hooks/useSocket';
 import Tile from '../../components/Tile/Tile';
-import CheckMove from '../../utils/CheckMove';
+import ChessLogic from '../../utils/CheckMove';
 import { HORIZONTAL_AXIS, VERTICAL_AXIS, INITIAL_BOARD, TILE_SIZE, PIECE_IMAGES } from '../../utils/constants';
 import './Game.css';
 
 export default function Game() {
-    const chessBoardRef = useRef(null);
     const { roomId } = useParams();
     const history = useHistory();
     const { user } = useAuth();
 
-    const [pieces, setPieces] = useState(INITIAL_BOARD);
-    const [initialX, setInitialX] = useState(null);
-    const [initialY, setInitialY] = useState(null);
-    const [activePiece, setActivePiece] = useState(null);
-    const [activeTile, setActiveTile] = useState(null);
-    const [whoseChanceItIs, setWhoseChanceItIs] = useState(null);
+    // Initialize with hasMoved: false
+    const [pieces, setPieces] = useState(INITIAL_BOARD.map(p => ({ ...p, hasMoved: false })));
+    const [draggedPiece, setDraggedPiece] = useState(null);
+    const [activeTile, setActiveTile] = useState(null); // For highlighting valid moves
+    const [whoseChanceItIs, setWhoseChanceItIs] = useState('white');
     const [yourColor, setYourColor] = useState(null);
     const [message, setMessage] = useState('');
 
     const [opponentUser, setOpponentUser] = useState({
-        playerName: '',
+        playerName: 'Waiting...',
         playerId: '',
         playerEmailId: '',
-        playerRating: '',
+        playerRating: '?',
     });
 
     const [bMail, setBMail] = useState('');
     const [wMail, setWMail] = useState('');
 
     const { socket, emit } = useSocket(roomId, pieces);
-    const checkMove = useRef(new CheckMove()).current;
+    const chessLogic = useRef(new ChessLogic()).current;
 
     // Send our info to opponent
     useEffect(() => {
@@ -58,63 +56,69 @@ export default function Game() {
     // Room full handler
     useEffect(() => {
         if (!socket) return;
-        const handler = () => history.goBack();
+        const handler = () => {
+            alert('Room is full!');
+            history.push('/chessgame');
+        };
         socket.on('room-full', handler);
         return () => socket.off('room-full', handler);
     }, [socket, history]);
 
-    // Checkmate handler
+    // Checkmate/Stalemate handlers
     useEffect(() => {
         if (!socket) return;
-        const handler = (loseColor) => {
+        
+        const checkmateHandler = (loseColor) => {
             const winColor = loseColor === 'black' ? 'white' : 'black';
-            setMessage(`It's checkmate !! Player with ${winColor} Wins Game`);
+            setMessage(`Checkmate! ${winColor} wins!`);
         };
-        socket.on('receive-update-checkmate', handler);
-        return () => socket.off('receive-update-checkmate', handler);
+        
+        const stalemateHandler = () => {
+            setMessage("Stalemate! It's a draw.");
+        };
+
+        const opponentLeftHandler = () => {
+            setMessage('Opponent disconnected.');
+        };
+
+        socket.on('receive-update-checkmate', checkmateHandler);
+        socket.on('receive-update-stalemate', stalemateHandler);
+        socket.on('opponent-left', opponentLeftHandler);
+
+        return () => {
+            socket.off('receive-update-checkmate', checkmateHandler);
+            socket.off('receive-update-stalemate', stalemateHandler);
+            socket.off('opponent-left', opponentLeftHandler);
+        };
     }, [socket]);
 
-    // Stalemate handler
+    // Sync game state
     useEffect(() => {
         if (!socket) return;
-        const handler = () => setMessage("It's a stalemate");
-        socket.on('receive-update-stalemate', handler);
-        return () => socket.off('receive-update-stalemate', handler);
-    }, [socket]);
 
-    // Opponent left handler
-    useEffect(() => {
-        if (!socket) return;
-        const handler = () => setMessage('Your opponent left');
-        socket.on('opponent-left', handler);
-        return () => socket.off('opponent-left', handler);
-    }, [socket]);
-
-    // Receive pieces from opponent
-    useEffect(() => {
-        if (!socket) return;
-        const handler = (receivedPieces, opponentColor) => {
-            setWhoseChanceItIs(opponentColor);
+        const receivePiecesHandler = (receivedPieces, nextTurn) => {
             setPieces(receivedPieces);
+            setWhoseChanceItIs(nextTurn);
+            setMessage(''); // Clear check message on new move
         };
-        socket.on('recieve-pieces', handler);
-        return () => socket.off('recieve-pieces', handler);
-    }, [socket]);
 
-    // Load chessboard from server
-    useEffect(() => {
-        if (!socket) return;
-        const handler = (data, chance, blackEmail, whiteEmail) => {
+        const loadBoardHandler = (data, turn, blackEmail, whiteEmail) => {
             setPieces(data);
-            setWhoseChanceItIs(chance);
+            setWhoseChanceItIs(turn);
             setBMail(blackEmail);
             setWMail(whiteEmail);
         };
-        socket.on('load-chessboard', handler);
-        return () => socket.off('load-chessboard', handler);
+
+        socket.on('recieve-pieces', receivePiecesHandler);
+        socket.on('load-chessboard', loadBoardHandler);
+
+        return () => {
+            socket.off('recieve-pieces', receivePiecesHandler);
+            socket.off('load-chessboard', loadBoardHandler);
+        };
     }, [socket]);
 
-    // Determine color from saved emails
+    // Determine color
     useEffect(() => {
         if (bMail === user?.playerEmailId) setYourColor('black');
         if (wMail === user?.playerEmailId) setYourColor('white');
@@ -131,243 +135,190 @@ export default function Game() {
         return () => socket.off('player-color', handler);
     }, [socket, user?.playerEmailId, emit]);
 
-    // Board rendering
-    const isBlack = yourColor === 'black';
-    const board = [];
-
-    const startRow = isBlack ? 7 : 0;
-    const endRow = isBlack ? -1 : 8;
-    const stepRow = isBlack ? -1 : 1;
-    const startCol = isBlack ? 7 : 0;
-    const endCol = isBlack ? -1 : 8;
-    const stepCol = isBlack ? -1 : 1;
-
-    for (let row = startRow; row !== endRow; row += stepRow) {
-        for (let col = startCol; col !== endCol; col += stepCol) {
-            board.push(
-                <span key={`${HORIZONTAL_AXIS[row]},${VERTICAL_AXIS[7 - row]}-${col}`}>
-                    <Tile pieces={pieces} row={row} col={col} activeTile={activeTile} />
-                </span>
-            );
+    // Drag Handlers
+    const handleDragStart = (e, piece) => {
+        // Validation: Only allow dragging own pieces on own turn
+        if (piece.color !== yourColor || whoseChanceItIs !== yourColor) {
+            e.preventDefault();
+            return;
         }
-    }
-
-    // Coordinate helpers
-    const getCoord = useCallback((clientPos, offset) => {
-        if (isBlack) {
-            return Math.floor(8 - ((clientPos - offset) / TILE_SIZE));
-        }
-        return Math.floor((clientPos - offset) / TILE_SIZE);
-    }, [isBlack]);
-
-    // Grab a piece
-    function grabPiece(e) {
-        const chessboard = chessBoardRef.current;
-        const element = e.target;
-
-        if (element.classList.contains('chess-piece')) {
-            const pieceY = getCoord(e.clientX, chessboard.offsetLeft);
-            const pieceX = getCoord(e.clientY, chessboard.offsetTop);
-            setInitialY(pieceY);
-            setInitialX(pieceX);
-
-            element.style.position = 'absolute';
-            element.style.left = `${e.clientX - 35}px`;
-            element.style.top = `${e.clientY - 35}px`;
-            setActivePiece(element);
-        }
-
-        const activePieceX = getCoord(e.clientX, chessboard.offsetLeft);
-        const activePieceY = getCoord(e.clientY, chessboard.offsetTop);
-
-        let aColor = '';
-        let aType = '';
-        pieces.forEach(p => {
-            if (p.x === activePieceY && p.y === activePieceX) {
-                aColor = p.color;
-                aType = p.type;
-            }
-        });
-
-        // Calculate valid moves for highlighting
-        const validMoves = [];
-        for (let row = 0; row <= 7; row++) {
-            for (let col = 0; col <= 7; col++) {
-                const targetRow = isBlack ? 7 - row : row;
-                const targetCol = isBlack ? 7 - col : col;
-                let validMove;
-
-                if (aType === 'queen') {
-                    validMove = checkMove.isValidMove(activePieceY, activePieceX, targetRow, targetCol, 'bishop', aColor, pieces, whoseChanceItIs, yourColor) ||
-                        checkMove.isValidMove(activePieceY, activePieceX, targetRow, targetCol, 'rook', aColor, pieces, whoseChanceItIs, yourColor);
-                } else {
-                    validMove = checkMove.isValidMove(activePieceY, activePieceX, targetRow, targetCol, aType, aColor, pieces, whoseChanceItIs, yourColor);
-                }
-
-                if (validMove) {
-                    validMoves.push({ x: targetRow, y: targetCol });
+        setDraggedPiece(piece);
+        
+        // Highlight valid moves
+        const moves = [];
+        for (let r = 0; r < 8; r++) {
+            for (let c = 0; c < 8; c++) {
+                if (chessLogic.isValidMove(piece.x, piece.y, r, c, pieces, yourColor)) {
+                    moves.push({ x: r, y: c });
                 }
             }
         }
-        setActiveTile(validMoves);
-    }
+        setActiveTile(moves);
+    };
 
-    // Move piece with mouse
-    function movePiece(e) {
-        if (activePiece) {
-            activePiece.style.position = 'absolute';
-            activePiece.style.top = `${e.clientY - 35}px`;
-            activePiece.style.left = `${e.clientX - 35}px`;
-        }
-    }
+    const handleDragOver = (e, row, col) => {
+        e.preventDefault(); // Allow drop
+    };
 
-    // Drop a piece
-    function dropPiece(e) {
-        const chessboard = chessBoardRef.current;
-        const col_num = getCoord(e.clientX, chessboard.offsetLeft);
-        const row_num = getCoord(e.clientY, chessboard.offsetTop);
-        const minX = chessboard.offsetLeft;
-        const minY = chessboard.offsetTop;
-        const maxX = chessboard.offsetLeft + chessboard.clientWidth;
-        const maxY = chessboard.offsetTop + chessboard.clientHeight;
+    const handleDrop = (e, row, col) => {
+        e.preventDefault();
+        setActiveTile(null); // Clear highlights
+        
+        if (!draggedPiece) return;
 
-        setActiveTile(null);
+        const { x: fromX, y: fromY } = draggedPiece;
+        
+        // Validate move using updated logic
+        if (chessLogic.isValidMove(fromX, fromY, row, col, pieces, yourColor)) {
+            // Check for Castling
+            const isCastling = draggedPiece.type === 'king' && Math.abs(col - fromY) === 2;
+            let castlingRookMove = null;
 
-        if (activePiece) {
-            if (e.clientX > maxX || e.clientX < minX || e.clientY > maxY || e.clientY < minY) {
-                // Outside board
-                activePiece.style.position = 'relative';
-                activePiece.style.removeProperty('top');
-                activePiece.style.removeProperty('left');
-                setActivePiece(null);
-            } else {
-                const currentPiece = pieces.find(p => p.x === initialX && p.y === initialY);
-                const attackedPiece = pieces.find(p => p.x === row_num && p.y === col_num);
+            if (isCastling) {
+                const isKingSide = col > fromY;
+                const rookCol = isKingSide ? 7 : 0;
+                const rookDestCol = isKingSide ? 5 : 3;
+                const rook = pieces.find(p => p.x === fromX && p.y === rookCol && p.type === 'rook');
+                if (rook) {
+                    castlingRookMove = { rook, toCol: rookDestCol };
+                }
+            }
 
-                if (currentPiece) {
-                    let validMove;
-                    if (currentPiece.type === 'queen') {
-                        validMove = checkMove.isValidMove(initialX, initialY, row_num, col_num, 'rook', currentPiece.color, pieces, whoseChanceItIs, yourColor) ||
-                            checkMove.isValidMove(initialX, initialY, row_num, col_num, 'bishop', currentPiece.color, pieces, whoseChanceItIs, yourColor);
-                    } else {
-                        validMove = checkMove.isValidMove(initialX, initialY, row_num, col_num, currentPiece.type, currentPiece.color, pieces, whoseChanceItIs, yourColor);
+            // Execute move
+            const newPieces = pieces
+                .filter(p => !(p.x === row && p.y === col)) // Remove captured piece at destination
+                .map(p => {
+                    // Move dragged piece
+                    if (p.x === fromX && p.y === fromY) {
+                        return { ...p, x: row, y: col, hasMoved: true }; 
                     }
-
-                    if (yourColor === currentPiece.color && validMove) {
-                        setPieces(prevPieces => {
-                            let filtered = prevPieces.filter(p => p !== attackedPiece);
-                            let newPieces = filtered.map(p => {
-                                if (p === currentPiece) {
-                                    p.x = row_num;
-                                    p.y = col_num;
-                                }
-                                // Pawn promotion
-                                if (p.type === 'pawn') {
-                                    if (p.color === 'white' && p.x === 0) {
-                                        p.type = 'queen';
-                                        p.image = PIECE_IMAGES.white.queen;
-                                    } else if (p.color === 'black' && p.x === 7) {
-                                        p.type = 'queen';
-                                        p.image = PIECE_IMAGES.black.queen;
-                                    }
-                                }
-                                return p;
-                            });
-
-                            const opponentColor = currentPiece.color === 'white' ? 'black' : 'white';
-                            emit('send-pieces', newPieces, opponentColor);
-                            emit('save-chessboard', newPieces, opponentColor, user?.playerEmailId);
-
-                            if (!checkMove.isThereAnyValidMove(opponentColor, newPieces)) {
-                                if (!checkMove.isKingNotOnCheck(-1, -1, -1, -1, currentPiece.color, newPieces)) {
-                                    emit('game-end-checkmate', opponentColor);
-                                    setMessage(`It's checkmate !! Player with ${currentPiece.color} Wins Game`);
-                                } else {
-                                    emit('game-end-stalemate');
-                                    setMessage("It's stalemate!!");
-                                }
-                            }
-
-                            return newPieces;
-                        });
-
-                        setWhoseChanceItIs(prev => prev === 'white' ? 'black' : 'white');
-                    } else {
-                        activePiece.style.position = 'relative';
-                        activePiece.style.removeProperty('top');
-                        activePiece.style.removeProperty('left');
+                    // Move Rook if castling
+                    if (castlingRookMove && p === castlingRookMove.rook) {
+                        return { ...p, y: castlingRookMove.toCol, hasMoved: true };
                     }
+                    return p;
+                });
+
+            // Handle Promotion (Auto-Queen for now)
+            const movedPiece = newPieces.find(p => p.x === row && p.y === col);
+            if (movedPiece && movedPiece.type === 'pawn') {
+                if ((movedPiece.color === 'white' && row === 0) || (movedPiece.color === 'black' && row === 7)) {
+                    movedPiece.type = 'queen';
+                    movedPiece.image = movedPiece.color === 'white' ? PIECE_IMAGES.white.queen : PIECE_IMAGES.black.queen;
                 }
             }
-            setActivePiece(null);
-            setInitialX(null);
-            setInitialY(null);
+
+            // Update local state
+            setPieces(newPieces);
+            const nextTurn = whoseChanceItIs === 'white' ? 'black' : 'white';
+            setWhoseChanceItIs(nextTurn);
+            
+            // Check Game Over conditions for opponent
+            const gameState = chessLogic.getGameState(nextTurn, newPieces);
+            
+            // Sync with server
+            emit('send-pieces', newPieces, nextTurn);
+            emit('save-chessboard', newPieces, nextTurn, user?.playerEmailId);
+
+            if (gameState === 'checkmate') {
+                emit('game-end-checkmate', nextTurn); // nextTurn lost
+                setMessage("Checkmate! You won!");
+            } else if (gameState === 'stalemate') {
+                emit('game-end-stalemate');
+                setMessage("Stalemate!");
+            }
         }
-    }
+        
+        setDraggedPiece(null);
+    };
 
     // Exit game
     const handleExit = () => {
-        gameApi.deleteBoard(roomId).catch(console.error);
-        emit('user-left');
-        history.push('/chessgame');
+        if (window.confirm("Are you sure you want to leave the game?")) {
+            gameApi.deleteBoard(roomId).catch(console.error);
+            emit('user-left');
+            history.push('/chessgame');
+        }
     };
+
+    // Render Board
+    const isBlack = yourColor === 'black';
+    const board = [];
+
+    // Render board based on player color (perspective)
+    for (let i = 0; i < 8; i++) {
+        const row = isBlack ? i : 7 - i;
+        for (let j = 0; j < 8; j++) {
+            const col = isBlack ? 7 - j : j;
+            board.push(
+                <Tile 
+                    key={`${row}-${col}`}
+                    pieces={pieces}
+                    row={row}
+                    col={col}
+                    activeTile={activeTile}
+                    onDragStart={handleDragStart}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                />
+            );
+        }
+    }
 
     const whitePawn = PIECE_IMAGES.white.pawn;
     const blackPawn = PIECE_IMAGES.black.pawn;
 
     return (
-        <>
-            <div className="chessboard_wrapper">
-                {/* Opponent Info */}
-                <div className="opponentinfo" style={{ backgroundColor: 'white' }}>
-                    <div className="card">
-                        <div className="img">
-                            <img src={yourColor === 'black' ? whitePawn : blackPawn} alt="opponent" />
-                        </div>
-                        <div className="infos">
-                            <div className="name">
-                                <h1>{opponentUser.playerName}</h1>
-                                <h3>@{opponentUser.playerId}</h3>
-                            </div>
-                            <h2>Rating: {opponentUser.playerRating}</h2>
-                        </div>
+        <div className="chessboard_wrapper">
+            {/* Opponent Info */}
+            <div className="opponentinfo" style={{ backgroundColor: 'white' }}>
+                <div className="card">
+                    <div className="img">
+                        <img src={yourColor === 'black' ? whitePawn : blackPawn} alt="opponent" />
                     </div>
-                </div>
-
-                {/* Chessboard */}
-                <div
-                    className="chessboard"
-                    ref={chessBoardRef}
-                    onMouseDown={grabPiece}
-                    onMouseMove={movePiece}
-                    onMouseUp={dropPiece}
-                >
-                    {board}
-                </div>
-
-                {/* Your Info */}
-                <div className="myinfo" style={{ backgroundColor: 'white' }}>
-                    <div className="card">
-                        <div className="img">
-                            <img src={yourColor === 'white' ? whitePawn : blackPawn} alt="you" />
+                    <div className="infos">
+                        <div className="name">
+                            <h1>{opponentUser.playerName}</h1>
+                            <h3>@{opponentUser.playerId || '...'}</h3>
                         </div>
-                        <div className="infos">
-                            <div className="name">
-                                <h1>{user?.playerName}</h1>
-                                <h3>@{user?.playerId}</h3>
-                            </div>
-                            <h2>Rating: {user?.playerRating}</h2>
-                        </div>
+                        <h2>Rating: {opponentUser.playerRating}</h2>
                     </div>
-                    <button className="button" onClick={handleExit}>Exit</button>
-                </div>
-
-                {/* Message Box */}
-                <div className="messagebox" style={{ backgroundColor: 'white' }}>
-                    Its {whoseChanceItIs}'s Turn<br />
-                    {message}
                 </div>
             </div>
-        </>
+
+            {/* Chessboard */}
+            <div className="chessboard">
+                {board}
+            </div>
+
+            {/* Player Info */}
+            <div className="myinfo" style={{ backgroundColor: 'white' }}>
+                <div className="card">
+                    <div className="img">
+                        <img src={yourColor === 'white' ? whitePawn : blackPawn} alt="you" />
+                    </div>
+                    <div className="infos">
+                        <div className="name">
+                            <h1>{user?.playerName}</h1>
+                            <h3>@{user?.playerId}</h3>
+                        </div>
+                        <h2>Rating: {user?.playerRating}</h2>
+                    </div>
+                </div>
+                <button className="button" onClick={handleExit}>Exit Game</button>
+            </div>
+
+            {/* Status Bar */}
+            <div className="messagebox" style={{ backgroundColor: 'white' }}>
+                <div className="status-text">
+                    {message || (
+                        <>
+                            Turn: <strong>{whoseChanceItIs ? whoseChanceItIs.toUpperCase() : '...'}</strong>
+                            {chessLogic.isKingInCheck(whoseChanceItIs, pieces) && <span className="check-alert"> (CHECK!)</span>}
+                        </>
+                    )}
+                </div>
+            </div>
+        </div>
     );
 }
