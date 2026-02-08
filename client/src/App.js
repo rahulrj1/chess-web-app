@@ -12,6 +12,7 @@ import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
 import Login from './pages/Login/Login';
 import Home from './pages/Home/Home';
 import Game from './pages/Game/Game';
+import SinglePlayer from './pages/SinglePlayer/SinglePlayer';
 import NotFound from './pages/NotFound/NotFound';
 
 import './styles/App.css';
@@ -31,6 +32,12 @@ function App() {
 
                     <ProtectedRoute exact path="/chessgame">
                         <Home />
+                    </ProtectedRoute>
+
+                    <ProtectedRoute path="/play/ai">
+                        <div className="container">
+                            <SinglePlayer />
+                        </div>
                     </ProtectedRoute>
 
                     <ProtectedRoute path="/chess/:roomId">

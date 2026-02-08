@@ -58,6 +58,8 @@ export default function Home() {
                     <form>
                         <h1>Start Game</h1>
                         <br />
+                        <button onClick={() => history.push('/play/ai')}>Play vs AI</button>
+                        <br /><br />
                         <button onClick={handleRandomJoin}>Join Random GAME</button>
                         <br /><br />
                         <input

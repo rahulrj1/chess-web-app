@@ -1,0 +1,92 @@
+/**
+ * SinglePlayer styles
+ * Extends the base game styles with AI-specific controls
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;300;700&display=swap');
+
+.sp-controls {
+    position: fixed;
+    bottom: 40px;
+    left: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sp-buttons {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.sp-btn {
+    font-size: 16px;
+    border: 1px solid white;
+    border-radius: 20px;
+    background-color: #240602;
+    color: #FFFFFF;
+    font-weight: bold;
+    padding: 10px 30px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform 80ms ease-in;
+}
+
+.sp-btn:hover {
+    background-color: #3a1005;
+}
+
+.sp-btn:active {
+    transform: scale(0.95);
+}
+
+.sp-select {
+    font-size: 16px;
+    padding: 10px 20px;
+    border-radius: 20px;
+    border: 2px solid #240602;
+    background-color: white;
+    color: #240602;
+    font-weight: bold;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.sp-select:focus {
+    outline: none;
+    border-color: #D49546;
+}
+
+.sp-loading {
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    text-shadow: 0 0 10px black;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+@media screen and (max-width: 900px) {
+    .sp-controls {
+        bottom: 5px;
+        left: 5px;
+    }
+    .sp-buttons {
+        flex-wrap: wrap;
+    }
+    .sp-btn {
+        font-size: 12px;
+        padding: 8px 15px;
+    }
+    .sp-select {
+        font-size: 12px;
+        padding: 8px 15px;
+    }
+}

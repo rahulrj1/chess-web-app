@@ -9,6 +9,10 @@ COPY package*.json ./
 # Install dependencies
 RUN npm install
 
+# Copy stockfish engine to public folder for Web Worker access
+RUN mkdir -p public/stockfish && \
+    cp node_modules/stockfish.js/stockfish.js public/stockfish/stockfish.js
+
 # Copy source code
 COPY . .
 
