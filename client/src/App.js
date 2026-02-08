@@ -1,50 +1,51 @@
-import React from "react"
-import Chessboard from "./Components/chessboard/chessboard"
-import Home from "./Components/home/home"
-import './App.css'
+/**
+ * App - Root Component
+ * Sets up routing and auth context
+ */
 
-import Loginform from './Components/Loginform/Loginform'
-import AccessDenied from "./Components/AccessDenied/AccessDenied"
+import React from 'react';
+import { BrowserRouter as Router, Switch, Route, Redirect } from 'react-router-dom';
 
+import { AuthProvider } from './context';
+import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
 
-import ReactNotification from 'react-notifications-component'
-import 'react-notifications-component/dist/theme.css'
+import Login from './pages/Login/Login';
+import Home from './pages/Home/Home';
+import Game from './pages/Game/Game';
+import NotFound from './pages/NotFound/NotFound';
 
-import { BrowserRouter as Router, Switch, Route, Redirect } from "react-router-dom";
+import './styles/App.css';
+
 function App() {
+    return (
+        <AuthProvider>
+            <Router>
+                <Switch>
+                    <Route exact path="/">
+                        <Redirect to="/login" />
+                    </Route>
 
-	return (
-		<>
-		<Router>
-			<Switch>
+                    <Route path="/login">
+                        <Login />
+                    </Route>
 
-				<Route exact path="/">
-					<Redirect to="/login" />
-				</Route>
+                    <ProtectedRoute exact path="/chessgame">
+                        <Home />
+                    </ProtectedRoute>
 
-				<Route path="/login">
-					<Loginform />
-				</Route>
+                    <ProtectedRoute path="/chess/:roomId">
+                        <div className="container">
+                            <Game />
+                        </div>
+                    </ProtectedRoute>
 
-				<Route exact path="/chessgame">
-					<Home />
-				</Route>
-
-				<Route path="/chess/:roomId" >
-					<div className="container">
-						<Chessboard />
-					</div>
-				</Route>
-
-				<Route path="/*">
-					<AccessDenied />
-				</Route>
-			</Switch>
-		</Router>
-		<ReactNotification />
-		</>
-
-	)
+                    <Route path="/*">
+                        <NotFound />
+                    </Route>
+                </Switch>
+            </Router>
+        </AuthProvider>
+    );
 }
 
-export default App
+export default App;

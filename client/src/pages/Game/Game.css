@@ -1,0 +1,123 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;300;700&display=swap');
+
+.chessboard_wrapper {
+    display: flex;
+    overflow: auto;
+}
+
+.chessboard {
+    border: 20px solid rgb(63, 9, 9);
+    display: grid;
+    grid-template-columns: repeat(8, 70px);
+    grid-template-rows: repeat(8, 70px);
+    height: 100%;
+    width: 100%;
+}
+
+.myinfo {
+    position: fixed;
+    bottom: 40px;
+    right: 40px;
+    border: 5px solid rgb(63, 9, 9);
+    background: linear-gradient(90deg, rgba(210, 187, 109, 1) 0%, rgba(255, 255, 255, 1) 100%);
+    box-shadow: 0px 0px 15px black;
+}
+
+.opponentinfo {
+    position: fixed;
+    top: 40px;
+    left: 40px;
+    border: 5px solid rgb(63, 9, 9);
+    box-shadow: 0px 0px 15px white;
+    background: linear-gradient(90deg, rgba(162, 93, 90, 1) 22%, rgba(255, 255, 255, 1) 100%);
+}
+
+.chessboard_wrapper .button {
+    position: fixed;
+    font-size: 22px;
+    bottom: 40px;
+    left: 40px;
+    border: 1px solid white;
+    border-radius: 20px;
+    background-color: #240602;
+    color: #FFFFFF;
+    font-weight: bold;
+    padding: 12px 45px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.messagebox {
+    padding: 20px;
+    font-size: 22px;
+    position: fixed;
+    top: 40px;
+    right: 40px;
+    border-radius: 10px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 1) 32%, rgba(137, 199, 105, 1) 74%);
+    box-shadow: 0px 0px 10px white;
+}
+
+.card::after,
+.card img {
+    border-radius: 50%;
+}
+
+.card {
+    border-radius: 10px;
+    max-width: 300px;
+    max-height: 300px;
+    box-shadow: 0 0 30px rgba(0, 0, 0, .15);
+    margin: 1rem;
+    display: flex;
+    transform-style: preserve-3d;
+    overflow: hidden;
+}
+
+.card img {
+    width: 70px;
+    min-width: 70px;
+    padding: 2px;
+    display: block;
+    max-width: 100%;
+}
+
+.infos {
+    margin-left: 1.5rem;
+}
+
+.name {
+    margin-bottom: 1rem;
+}
+
+.name h2 {
+    font-size: 1.3rem;
+}
+
+@media screen and (max-width: 1200px) {
+    .card {
+        display: none;
+    }
+    .infos {
+        margin-left: 0;
+        margin-top: 1.5rem;
+    }
+}
+
+@media screen and (max-width: 900px) {
+    .card {
+        display: none;
+    }
+    .chessboard_wrapper .button {
+        position: fixed;
+        bottom: 5px;
+        left: 5px;
+    }
+    .messagebox {
+        padding: 5px;
+        position: fixed;
+        top: 5px;
+        right: 5px;
+    }
+}

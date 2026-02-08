@@ -1,57 +1,34 @@
-import React from "react"
-import "./tile.css"
+/**
+ * Tile Component
+ * Renders a single square on the chessboard
+ */
 
-function Tile(props) {
-    let piece = null;
-    props.pieces.forEach( p =>{
-        if(props.row === p.x && props.col === p.y) {
-            piece = p;
-        }
-    })
+import React, { useMemo } from 'react';
+import './Tile.css';
 
-    let highlighted = false;
-    if(props.activeTile !== null) {
-        props.activeTile.forEach( p =>{
-            if(props.row === p.x && props.col === p.y) {
-                highlighted = true;
-            }
-        })
-    }
+function Tile({ pieces, row, col, activeTile }) {
+    const piece = useMemo(() => {
+        return pieces.find(p => p.x === row && p.y === col) || null;
+    }, [pieces, row, col]);
 
-    if(highlighted)
-    {
-        if ((props.row + props.col) % 2 === 0) {
-            return (
-                <div className="tile black-tile highlighted" >
-                    {piece && <div style={{ backgroundImage: `url(${piece.image})` }} className="chess-piece" ></div>}
-                </div>
-            )
-        }
-        else {
-            return (
-                <div className="tile white-tile highlighted" >
-                    {piece && <div style={{ backgroundImage: `url(${piece.image})` } } className="chess-piece"></div>}
-                </div>
-            )
-        }
-    }
-    else
-    {
-        if ((props.row + props.col) % 2 === 0) {
-            return (
-                <div className="tile black-tile" >
-                    {piece && <div style={{ backgroundImage: `url(${piece.image})` }} className="chess-piece" ></div>}
-                </div>
-            )
-        }
-        else {
-            return (
-                <div className="tile white-tile" >
-                    {piece && <div style={{ backgroundImage: `url(${piece.image})` }} className="chess-piece"></div>}
-                </div>
-            )
-        }
-    }
+    const isHighlighted = useMemo(() => {
+        if (!activeTile) return false;
+        return activeTile.some(p => p.x === row && p.y === col);
+    }, [activeTile, row, col]);
+
+    const isDark = (row + col) % 2 === 0;
+    const tileClass = `tile ${isDark ? 'black-tile' : 'white-tile'}${isHighlighted ? ' highlighted' : ''}`;
+
+    return (
+        <div className={tileClass}>
+            {piece && (
+                <div
+                    style={{ backgroundImage: `url(${piece.image})` }}
+                    className="chess-piece"
+                />
+            )}
+        </div>
+    );
 }
 
-export default Tile
+export default React.memo(Tile);
