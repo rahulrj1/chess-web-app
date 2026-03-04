@@ -28,8 +28,6 @@
     background-color: var(--board-white);
 }
 
-/* Optional: Add coordinates if we want to get fancy later */
-
 .chess-piece {
     width: 90%;
     height: 90%;
@@ -45,4 +43,33 @@
     transform: scale(1.1);
 }
 
-/* Animation for move could be added here if we had a way to detect 'just moved' class */
+/* Board coordinate labels */
+.coord-rank {
+    position: absolute;
+    top: 2px;
+    left: 3px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+}
+
+.coord-file {
+    position: absolute;
+    bottom: 2px;
+    right: 3px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+}
+
+.coord-light {
+    color: var(--board-white, #ebecd0);
+}
+
+.coord-dark {
+    color: var(--board-black, #779556);
+}

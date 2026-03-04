@@ -1,12 +1,14 @@
 /**
  * Tile Component
- * Renders a single square on the chessboard
+ * Renders a single square on the chessboard with optional coordinate labels
  */
 
 import React, { useMemo } from 'react';
 import './Tile.css';
 
-function Tile({ pieces, row, col, activeTile, onDragStart, onDragOver, onDrop }) {
+const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+
+function Tile({ pieces, row, col, activeTile, onDragStart, onDragOver, onDrop, showCoords, isBottom, isLeft }) {
     const piece = useMemo(() => {
         return pieces.find(p => p.x === row && p.y === col) || null;
     }, [pieces, row, col]);
@@ -20,7 +22,7 @@ function Tile({ pieces, row, col, activeTile, onDragStart, onDragOver, onDrop })
     const tileClass = `tile ${isDark ? 'black-tile' : 'white-tile'}${isHighlighted ? ' highlighted' : ''}`;
 
     return (
-        <div 
+        <div
             className={tileClass}
             onDragOver={(e) => onDragOver(e, row, col)}
             onDrop={(e) => onDrop(e, row, col)}
@@ -32,6 +34,12 @@ function Tile({ pieces, row, col, activeTile, onDragStart, onDragOver, onDrop })
                     draggable={true}
                     onDragStart={(e) => onDragStart(e, piece)}
                 />
+            )}
+            {showCoords && isLeft && (
+                <span className={`coord-rank ${isDark ? 'coord-light' : 'coord-dark'}`}>{8 - row}</span>
+            )}
+            {showCoords && isBottom && (
+                <span className={`coord-file ${isDark ? 'coord-light' : 'coord-dark'}`}>{FILES[col]}</span>
             )}
         </div>
     );

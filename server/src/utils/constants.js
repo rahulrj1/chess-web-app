@@ -33,6 +33,7 @@ const SOCKET_EVENTS = {
     SAVE_CHESSBOARD: 'save-chessboard',
     GAME_END_CHECKMATE: 'game-end-checkmate',
     GAME_END_STALEMATE: 'game-end-stalemate',
+    GAME_END_DRAW: 'game-end-draw',
     USER_LEFT: 'user-left',
     SEND_OPPONENT_INFO: 'send-opponent-info',
     
@@ -43,7 +44,9 @@ const SOCKET_EVENTS = {
     RECEIVE_PIECES: 'recieve-pieces', // Note: typo preserved for compatibility
     RECEIVE_UPDATE_CHECKMATE: 'receive-update-checkmate',
     RECEIVE_UPDATE_STALEMATE: 'receive-update-stalemate',
+    RECEIVE_UPDATE_DRAW: 'receive-update-draw',
     OPPONENT_LEFT: 'opponent-left',
+    OPPONENT_RECONNECTED: 'opponent-reconnected',
     RECEIVE_OPPONENT_INFO: 'recieve-opponent-info', // Note: typo preserved
     ERROR: 'error',
 };

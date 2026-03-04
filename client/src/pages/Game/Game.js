@@ -24,6 +24,11 @@ export default function Game() {
     const [whoseChanceItIs, setWhoseChanceItIs] = useState('white');
     const [yourColor, setYourColor] = useState(null);
     const [message, setMessage] = useState('');
+    const [enPassantTarget, setEnPassantTarget] = useState(null);
+    const [moveHistory, setMoveHistory] = useState([]);
+    const [pendingPromotion, setPendingPromotion] = useState(null);
+    const [halfMoveClock, setHalfMoveClock] = useState(0);
+    const [positionHistory, setPositionHistory] = useState([]);
 
     const [opponentUser, setOpponentUser] = useState({
         playerName: 'Waiting...',
@@ -64,29 +69,48 @@ export default function Game() {
         if (!socket) return;
         const checkmateHandler = (loseColor) => {
             const winColor = loseColor === 'black' ? 'white' : 'black';
-            setMessage(`Checkmate! ${winColor} wins!`);
+            setMessage(`Checkmate! ${winColor.charAt(0).toUpperCase() + winColor.slice(1)} wins!`);
         };
         const stalemateHandler = () => {
             setMessage("Stalemate! It's a draw.");
         };
+        const drawHandler = (reason) => {
+            const reasons = {
+                'draw-insufficient': 'Draw — insufficient material.',
+                'draw-fifty': 'Draw — fifty-move rule.',
+                'draw-repetition': 'Draw — threefold repetition.',
+            };
+            setMessage(reasons[reason] || "It's a draw.");
+        };
         const opponentLeftHandler = () => {
             setMessage('Opponent disconnected.');
         };
+        const opponentReconnectedHandler = () => {
+            if (message === 'Opponent disconnected.') {
+                setMessage('');
+            }
+        };
         socket.on('receive-update-checkmate', checkmateHandler);
         socket.on('receive-update-stalemate', stalemateHandler);
+        socket.on('receive-update-draw', drawHandler);
         socket.on('opponent-left', opponentLeftHandler);
+        socket.on('opponent-reconnected', opponentReconnectedHandler);
         return () => {
             socket.off('receive-update-checkmate', checkmateHandler);
             socket.off('receive-update-stalemate', stalemateHandler);
+            socket.off('receive-update-draw', drawHandler);
             socket.off('opponent-left', opponentLeftHandler);
+            socket.off('opponent-reconnected', opponentReconnectedHandler);
         };
-    }, [socket]);
+    }, [socket, message]);
 
     useEffect(() => {
         if (!socket) return;
-        const receivePiecesHandler = (receivedPieces, nextTurn) => {
+        const receivePiecesHandler = (receivedPieces, nextTurn, receivedEp, uciMove) => {
             setPieces(receivedPieces);
             setWhoseChanceItIs(nextTurn);
+            setEnPassantTarget(receivedEp || null);
+            if (uciMove) setMoveHistory(prev => [...prev, uciMove]);
             setMessage('');
         };
         const loadBoardHandler = (data, turn, blackEmail, whiteEmail) => {
@@ -119,7 +143,7 @@ export default function Game() {
     }, [socket, user?.playerEmailId, emit]);
 
     const handleDragStart = (e, piece) => {
-        if (piece.color !== yourColor || whoseChanceItIs !== yourColor) {
+        if (piece.color !== yourColor || whoseChanceItIs !== yourColor || pendingPromotion) {
             e.preventDefault();
             return;
         }
@@ -127,7 +151,7 @@ export default function Game() {
         const moves = [];
         for (let r = 0; r < 8; r++) {
             for (let c = 0; c < 8; c++) {
-                if (chessLogic.isValidMove(piece.x, piece.y, r, c, pieces, yourColor)) {
+                if (chessLogic.isValidMove(piece.x, piece.y, r, c, pieces, yourColor, enPassantTarget)) {
                     moves.push({ x: r, y: c });
                 }
             }
@@ -139,6 +163,91 @@ export default function Game() {
         e.preventDefault();
     };
 
+    const executeMove = (fromX, fromY, row, col, promotionType) => {
+        const movingPiece = pieces.find(p => p.x === fromX && p.y === fromY);
+        if (!movingPiece) return;
+
+        const isCapture = !!pieces.find(p => p.x === row && p.y === col);
+        const isEnPassant = movingPiece.type === 'pawn' && enPassantTarget &&
+            row === enPassantTarget.x && col === enPassantTarget.y;
+
+        const isCastling = movingPiece.type === 'king' && Math.abs(col - fromY) === 2;
+        let castlingRookMove = null;
+        if (isCastling) {
+            const isKingSide = col > fromY;
+            const rookCol = isKingSide ? 7 : 0;
+            const rookDestCol = isKingSide ? 5 : 3;
+            const rook = pieces.find(p => p.x === fromX && p.y === rookCol && p.type === 'rook');
+            if (rook) castlingRookMove = { rook, toCol: rookDestCol };
+        }
+
+        let newPieces = pieces
+            .filter(p => !(p.x === row && p.y === col))
+            .map(p => {
+                if (p.x === fromX && p.y === fromY) {
+                    const updated = { ...p, x: row, y: col, hasMoved: true };
+                    if (promotionType) {
+                        const typeMap = { q: 'queen', r: 'rook', b: 'bishop', n: 'knight' };
+                        updated.type = typeMap[promotionType] || 'queen';
+                        updated.image = PIECE_IMAGES[movingPiece.color][updated.type];
+                    }
+                    return updated;
+                }
+                if (castlingRookMove && p === castlingRookMove.rook) {
+                    return { ...p, y: castlingRookMove.toCol, hasMoved: true };
+                }
+                return p;
+            });
+
+        if (isEnPassant) {
+            const capturedRow = movingPiece.color === 'white' ? row + 1 : row - 1;
+            newPieces = newPieces.filter(p => !(p.x === capturedRow && p.y === col));
+        }
+
+        let newEp = null;
+        if (movingPiece.type === 'pawn' && Math.abs(row - fromX) === 2) {
+            newEp = { x: (fromX + row) / 2, y: fromY };
+        }
+        setEnPassantTarget(newEp);
+
+        const resetClock = movingPiece.type === 'pawn' || isCapture || isEnPassant;
+        const newHmc = resetClock ? 0 : halfMoveClock + 1;
+        setHalfMoveClock(newHmc);
+
+        const nextTurn = whoseChanceItIs === 'white' ? 'black' : 'white';
+        const posKey = chessLogic.generatePositionKey(newPieces, nextTurn, newEp);
+        const newPosHist = [...positionHistory, posKey];
+        setPositionHistory(newPosHist);
+
+        const uciMove = `${String.fromCharCode(97 + fromY)}${8 - fromX}${String.fromCharCode(97 + col)}${8 - row}${promotionType || ''}`;
+
+        setPieces(newPieces);
+        setMoveHistory(prev => [...prev, uciMove]);
+        setWhoseChanceItIs(nextTurn);
+
+        const drawState = { halfMoveClock: newHmc, positionHistory: newPosHist };
+        const gameState = chessLogic.getGameState(nextTurn, newPieces, newEp, drawState);
+        emit('send-pieces', newPieces, nextTurn, newEp, uciMove);
+        emit('save-chessboard', newPieces, nextTurn, user?.playerEmailId);
+
+        if (gameState === 'checkmate') {
+            emit('game-end-checkmate', nextTurn);
+            const winner = nextTurn === 'white' ? 'Black' : 'White';
+            setMessage(`Checkmate! ${winner} wins!`);
+        } else if (gameState === 'stalemate') {
+            emit('game-end-stalemate');
+            setMessage("Stalemate! It's a draw.");
+        } else if (gameState.startsWith('draw-')) {
+            emit('game-end-draw', gameState);
+            const reasons = {
+                'draw-insufficient': 'Draw — insufficient material.',
+                'draw-fifty': 'Draw — fifty-move rule.',
+                'draw-repetition': 'Draw — threefold repetition.',
+            };
+            setMessage(reasons[gameState] || "It's a draw.");
+        }
+    };
+
     const handleDrop = (e, row, col) => {
         e.preventDefault();
         setActiveTile(null);
@@ -146,54 +255,22 @@ export default function Game() {
 
         const { x: fromX, y: fromY } = draggedPiece;
 
-        if (chessLogic.isValidMove(fromX, fromY, row, col, pieces, yourColor)) {
-            const isCastling = draggedPiece.type === 'king' && Math.abs(col - fromY) === 2;
-            let castlingRookMove = null;
-            if (isCastling) {
-                const isKingSide = col > fromY;
-                const rookCol = isKingSide ? 7 : 0;
-                const rookDestCol = isKingSide ? 5 : 3;
-                const rook = pieces.find(p => p.x === fromX && p.y === rookCol && p.type === 'rook');
-                if (rook) castlingRookMove = { rook, toCol: rookDestCol };
+        if (chessLogic.isValidMove(fromX, fromY, row, col, pieces, yourColor, enPassantTarget)) {
+            if (draggedPiece.type === 'pawn' && (row === 0 || row === 7)) {
+                setPendingPromotion({ fromX, fromY, row, col });
+                setDraggedPiece(null);
+                return;
             }
-
-            const newPieces = pieces
-                .filter(p => !(p.x === row && p.y === col))
-                .map(p => {
-                    if (p.x === fromX && p.y === fromY) {
-                        return { ...p, x: row, y: col, hasMoved: true };
-                    }
-                    if (castlingRookMove && p === castlingRookMove.rook) {
-                        return { ...p, y: castlingRookMove.toCol, hasMoved: true };
-                    }
-                    return p;
-                });
-
-            const movedPiece = newPieces.find(p => p.x === row && p.y === col);
-            if (movedPiece && movedPiece.type === 'pawn') {
-                if ((movedPiece.color === 'white' && row === 0) || (movedPiece.color === 'black' && row === 7)) {
-                    movedPiece.type = 'queen';
-                    movedPiece.image = movedPiece.color === 'white' ? PIECE_IMAGES.white.queen : PIECE_IMAGES.black.queen;
-                }
-            }
-
-            setPieces(newPieces);
-            const nextTurn = whoseChanceItIs === 'white' ? 'black' : 'white';
-            setWhoseChanceItIs(nextTurn);
-
-            const gameState = chessLogic.getGameState(nextTurn, newPieces);
-            emit('send-pieces', newPieces, nextTurn);
-            emit('save-chessboard', newPieces, nextTurn, user?.playerEmailId);
-
-            if (gameState === 'checkmate') {
-                emit('game-end-checkmate', nextTurn);
-                setMessage("Checkmate! You won!");
-            } else if (gameState === 'stalemate') {
-                emit('game-end-stalemate');
-                setMessage("Stalemate!");
-            }
+            executeMove(fromX, fromY, row, col, '');
         }
         setDraggedPiece(null);
+    };
+
+    const handlePromotionChoice = (type) => {
+        if (!pendingPromotion) return;
+        const { fromX, fromY, row, col } = pendingPromotion;
+        executeMove(fromX, fromY, row, col, type);
+        setPendingPromotion(null);
     };
 
     const handleExit = () => {
@@ -220,6 +297,9 @@ export default function Game() {
                     onDragStart={handleDragStart}
                     onDragOver={handleDragOver}
                     onDrop={handleDrop}
+                    showCoords={true}
+                    isBottom={i === 7}
+                    isLeft={j === 0}
                 />
             );
         }
@@ -232,7 +312,6 @@ export default function Game() {
     return (
         <div className="game-page">
             <div className="game-layout">
-                {/* Board Section */}
                 <div className="game-board-section">
                     <div className={`game-player-bar ${!isMyTurn ? 'active-turn' : ''}`}>
                         <div className="game-avatar">
@@ -261,7 +340,6 @@ export default function Game() {
                     </div>
                 </div>
 
-                {/* Sidebar */}
                 <div className="game-sidebar">
                     <div className="game-status">
                         {message || (
@@ -286,9 +364,43 @@ export default function Game() {
                         </div>
                     )}
 
+                    {moveHistory.length > 0 && (
+                        <div className="game-history">
+                            <span className="game-history-label">Moves</span>
+                            <div className="move-list">
+                                {moveHistory.reduce((rows, move, i) => {
+                                    if (i % 2 === 0) rows.push([move]);
+                                    else rows[rows.length - 1].push(move);
+                                    return rows;
+                                }, []).map((pair, i) => (
+                                    <div key={i} className="move-row">
+                                        <span className="move-num">{i + 1}.</span>
+                                        <span className="move-white">{pair[0]}</span>
+                                        {pair[1] && <span className="move-black">{pair[1]}</span>}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     <button className="game-exit-btn" onClick={handleExit}>Leave Game</button>
                 </div>
             </div>
+
+            {pendingPromotion && (
+                <div className="promotion-overlay">
+                    <div className="promotion-modal">
+                        <p>Promote pawn to:</p>
+                        <div className="promotion-options">
+                            {['queen', 'rook', 'bishop', 'knight'].map(type => (
+                                <button key={type} className="promotion-piece" onClick={() => handlePromotionChoice(type[0])}>
+                                    <img src={PIECE_IMAGES[yourColor][type]} alt={type} />
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

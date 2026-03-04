@@ -1,9 +1,10 @@
 /**
- * Chess Logic Engine
- * Stateless utility for move validation and game state checks
+ * Chess Logic Engine (Server-side)
+ * Stateless utility for move validation
+ * Mirrors client/src/utils/CheckMove.js
  */
 
-export default class ChessLogic {
+class ChessLogic {
     getPieceAt(x, y, pieces) {
         return pieces.find(p => p.x === x && p.y === y) || null;
     }
@@ -64,9 +65,7 @@ export default class ChessLogic {
                 const direction = color === 'white' ? -1 : 1;
                 const startRow = color === 'white' ? 6 : 1;
 
-                if (dy === 0 && dx === direction) {
-                    return !targetPiece;
-                }
+                if (dy === 0 && dx === direction) return !targetPiece;
                 if (dy === 0 && dx === direction * 2 && fromX === startRow) {
                     return !targetPiece && !this.getPieceAt(fromX + direction, fromY, pieces);
                 }
@@ -105,7 +104,6 @@ export default class ChessLogic {
         }
 
         if (!this.isGeometryValid(piece, toX, toY, pieces, enPassantTarget)) return false;
-
         return !this.isKingInCheckAfterMove(piece, toX, toY, pieces, enPassantTarget);
     }
 
@@ -146,7 +144,6 @@ export default class ChessLogic {
             .filter(p => !(p.x === toX && p.y === toY))
             .map(p => (p === piece ? { ...p, x: toX, y: toY } : p));
 
-        // Remove the captured pawn for en passant
         if (piece.type === 'pawn' && enPassantTarget && toX === enPassantTarget.x && toY === enPassantTarget.y) {
             const capturedRow = piece.color === 'white' ? toX + 1 : toX - 1;
             nextPieces = nextPieces.filter(p => !(p.x === capturedRow && p.y === toY));
@@ -160,79 +157,6 @@ export default class ChessLogic {
         if (!king) return false;
         return this.isSquareAttacked(king.x, king.y, color, pieces);
     }
-
-    hasAnyValidMoves(color, pieces, enPassantTarget) {
-        return pieces.some(p => {
-            if (p.color !== color) return false;
-            for (let x = 0; x < 8; x++) {
-                for (let y = 0; y < 8; y++) {
-                    if (this.isValidMove(p.x, p.y, x, y, pieces, color, enPassantTarget)) return true;
-                }
-            }
-            return false;
-        });
-    }
-
-    getGameState(color, pieces, enPassantTarget, drawState) {
-        if (!this.hasAnyValidMoves(color, pieces, enPassantTarget)) {
-            return this.isKingInCheck(color, pieces) ? 'checkmate' : 'stalemate';
-        }
-        if (this.isInsufficientMaterial(pieces)) return 'draw-insufficient';
-        if (drawState) {
-            if (drawState.halfMoveClock >= 100) return 'draw-fifty';
-            if (this.isThreefoldRepetition(drawState.positionHistory)) return 'draw-repetition';
-        }
-        return 'continue';
-    }
-
-    isInsufficientMaterial(pieces) {
-        const white = pieces.filter(p => p.color === 'white');
-        const black = pieces.filter(p => p.color === 'black');
-
-        // King vs King
-        if (white.length === 1 && black.length === 1) return true;
-
-        // King+Bishop vs King or King+Knight vs King
-        if (white.length === 1 && black.length === 2) {
-            const extra = black.find(p => p.type !== 'king');
-            if (extra && (extra.type === 'bishop' || extra.type === 'knight')) return true;
-        }
-        if (black.length === 1 && white.length === 2) {
-            const extra = white.find(p => p.type !== 'king');
-            if (extra && (extra.type === 'bishop' || extra.type === 'knight')) return true;
-        }
-
-        // King+Bishop vs King+Bishop (same color bishops)
-        if (white.length === 2 && black.length === 2) {
-            const wb = white.find(p => p.type === 'bishop');
-            const bb = black.find(p => p.type === 'bishop');
-            if (wb && bb && (wb.x + wb.y) % 2 === (bb.x + bb.y) % 2) return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Generate a position key for repetition detection.
-     * Encodes piece positions, whose turn, and castling rights.
-     */
-    generatePositionKey(pieces, turnColor, enPassantTarget) {
-        const sorted = pieces
-            .map(p => `${p.type[0]}${p.color[0]}${p.x}${p.y}${p.hasMoved ? '1' : '0'}`)
-            .sort()
-            .join(',');
-        const ep = enPassantTarget ? `${enPassantTarget.x}${enPassantTarget.y}` : '-';
-        return `${sorted}|${turnColor}|${ep}`;
-    }
-
-    isThreefoldRepetition(positionHistory) {
-        if (!positionHistory || positionHistory.length < 5) return false;
-        const last = positionHistory[positionHistory.length - 1];
-        let count = 0;
-        for (const pos of positionHistory) {
-            if (pos === last) count++;
-            if (count >= 3) return true;
-        }
-        return false;
-    }
 }
+
+module.exports = ChessLogic;

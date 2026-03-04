@@ -196,6 +196,122 @@
     transform: translateY(-1px);
 }
 
+/* ---- Move History ---- */
+.game-history {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.game-history-label {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 500;
+}
+
+.game-history .move-list {
+    max-height: 180px;
+    overflow-y: auto;
+    padding: 8px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    font-size: 0.78rem;
+    font-family: 'Courier New', monospace;
+    color: var(--text-primary);
+}
+
+.game-history .move-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.game-history .move-list::-webkit-scrollbar-thumb {
+    background: var(--border-subtle);
+    border-radius: 2px;
+}
+
+.game-history .move-row {
+    display: flex;
+    gap: 8px;
+    padding: 2px 0;
+}
+
+.game-history .move-num {
+    color: var(--text-secondary);
+    min-width: 24px;
+}
+
+.game-history .move-white,
+.game-history .move-black {
+    min-width: 48px;
+}
+
+.game-history .move-black {
+    color: var(--text-secondary);
+}
+
+/* ---- Promotion Modal ---- */
+.promotion-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.promotion-modal {
+    background: var(--bg-surface);
+    border: 1px solid var(--gold);
+    border-radius: var(--radius-lg);
+    padding: 24px 28px;
+    text-align: center;
+}
+
+.promotion-modal p {
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    color: var(--gold);
+    margin: 0 0 16px 0;
+    letter-spacing: 0.5px;
+}
+
+.promotion-options {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.promotion-piece {
+    width: 60px;
+    height: 60px;
+    background: var(--bg-elevated);
+    border: 2px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    padding: 8px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.promotion-piece img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.promotion-piece:hover {
+    border-color: var(--gold);
+    background: rgba(212, 168, 67, 0.1);
+    transform: scale(1.1);
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 900px) {
     .game-layout {
