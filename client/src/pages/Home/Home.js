@@ -35,29 +35,42 @@ export default function Home() {
 
     return (
         <div className="home_screen">
+            <div className="bg-chess-pattern" />
+            <div className="bg-glow bg-glow-1" />
+            <div className="bg-glow bg-glow-2" />
+
             <div ref={containerRef} className="panel-container">
                 {/* Profile Panel */}
                 <div className="form-container sign-up-container">
                     <div className="panel-content">
-                        <div className="chess-icon">&#9818;</div>
-                        <h1>Profile</h1>
-                        <p className="subtitle">Your account details</p>
-                        <div className="profile-details">
-                            <div className="profile-row">
-                                <span className="label">Name</span>
-                                <span className="value">{user?.playerName || '—'}</span>
+                        <div className="form-header">
+                            <span className="form-icon">&#9818;</span>
+                            <h1>Profile</h1>
+                            <p className="form-subtitle">Your kingdom stats</p>
+                        </div>
+                        <div className="profile-stats">
+                            <div className="stat-row">
+                                <span className="stat-label">Name</span>
+                                <span className="stat-value">{user?.playerName || '—'}</span>
                             </div>
-                            <div className="profile-row">
-                                <span className="label">Username</span>
-                                <span className="value">{user?.playerId || '—'}</span>
+                            <div className="stat-row">
+                                <span className="stat-label">Username</span>
+                                <span className="stat-value">{user?.playerId || '—'}</span>
                             </div>
-                            <div className="profile-row">
-                                <span className="label">Email</span>
-                                <span className="value">{user?.playerEmailId || '—'}</span>
+                            <div className="stat-row">
+                                <span className="stat-label">Email</span>
+                                <span className="stat-value">{user?.playerEmailId || '—'}</span>
                             </div>
                         </div>
-                        <div className="rating-badge">
-                            &#9733; Rating: {user?.playerRating || 1200}
+                        <div className="rating-display">
+                            <span className="rating-star">&#9733;</span>
+                            <span className="rating-number">{user?.playerRating || 1200}</span>
+                            <span className="rating-label">ELO</span>
+                        </div>
+
+                        <div className="mobile-nav">
+                            <button className="mobile-nav-btn" onClick={showLeftPanel}>Play</button>
+                            <button className="mobile-nav-btn" onClick={handleLogout}>Logout</button>
                         </div>
                     </div>
                 </div>
@@ -65,29 +78,42 @@ export default function Home() {
                 {/* Game Panel */}
                 <div className="form-container sign-in-container">
                     <div className="panel-content">
-                        <div className="chess-icon">&#9822;</div>
-                        <h1>Play Chess</h1>
-                        <p className="subtitle">Choose your game mode</p>
-                        <div className="game-actions">
-                            <button className="action-btn primary" onClick={() => history.push('/play/ai')}>
-                                &#9817; Play vs AI
+                        <div className="form-header">
+                            <span className="form-icon">&#9822;</span>
+                            <h1>Play Chess</h1>
+                            <p className="form-subtitle">Choose your battleground</p>
+                        </div>
+                        <div className="game-modes">
+                            <button className="mode-btn primary" onClick={() => history.push('/play/ai')}>
+                                <span className="mode-icon">&#9823;</span>
+                                <div className="mode-info">
+                                    <span className="mode-title">Play vs AI</span>
+                                    <span className="mode-desc">Challenge the Stockfish engine</span>
+                                </div>
                             </button>
-                            <button className="action-btn secondary" onClick={handleRandomJoin}>
-                                &#9812; Random Match
+                            <button className="mode-btn" onClick={handleRandomJoin}>
+                                <span className="mode-icon">&#9876;</span>
+                                <div className="mode-info">
+                                    <span className="mode-title">Random Match</span>
+                                    <span className="mode-desc">Find an opponent instantly</span>
+                                </div>
                             </button>
-                            <div className="divider">or join a room</div>
-                            <div className="room-group">
-                                <input
-                                    className="room-input"
-                                    type="text"
-                                    value={gameCode}
-                                    placeholder="Enter room code"
-                                    onChange={(e) => setGameCode(e.target.value)}
-                                />
-                                <button className="join-btn" onClick={handleStartClick}>
-                                    Join
-                                </button>
-                            </div>
+                        </div>
+                        <div className="room-divider">or enter a room code</div>
+                        <div className="room-join">
+                            <input
+                                className="room-input"
+                                type="text"
+                                value={gameCode}
+                                placeholder="Room code"
+                                onChange={(e) => setGameCode(e.target.value)}
+                            />
+                            <button className="join-btn" onClick={handleStartClick}>Join</button>
+                        </div>
+
+                        <div className="mobile-nav">
+                            <button className="mobile-nav-btn" onClick={showRightPanel}>Profile</button>
+                            <button className="mobile-nav-btn" onClick={handleLogout}>Logout</button>
                         </div>
                     </div>
                 </div>
@@ -96,13 +122,15 @@ export default function Home() {
                 <div className="overlay-container">
                     <div className="overlay">
                         <div className="overlay-panel overlay-left">
-                            <h1>&#9813; Play</h1>
-                            <p>Start a new game, play against AI, or challenge a friend with a room code.</p>
+                            <span className="overlay-piece">&#9813;</span>
+                            <h1>Ready to Play?</h1>
+                            <p>Challenge AI, join random matches, or invite friends to a private room.</p>
                             <button className="ghost-btn" onClick={showLeftPanel}>Start Game</button>
                         </div>
                         <div className="overlay-panel overlay-right">
-                            <h1>&#9818; Your Profile</h1>
-                            <p>View your stats and account details.</p>
+                            <span className="overlay-piece">&#9818;</span>
+                            <h1>Your Kingdom</h1>
+                            <p>View your profile, rating, and track your progress.</p>
                             <button className="ghost-btn" onClick={showRightPanel}>Profile</button>
                             <button className="ghost-btn logout" onClick={handleLogout}>Logout</button>
                         </div>

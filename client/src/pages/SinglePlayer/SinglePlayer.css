@@ -1,105 +1,252 @@
-/**
- * SinglePlayer styles
- * Extends the base game styles with AI-specific controls
- */
+/* ============================================
+   SINGLE PLAYER — Premium Dark Chess Theme
+   ============================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;300;700&display=swap');
-
-/* Inherits .chessboard_wrapper layout from Game.css if imported globally or we replicate it */
-/* Assuming Game.css styles might not leak if scoped, but App.css is global. */
-/* Let's be safe and ensure SinglePlayer follows the flex pattern */
-
-.sp-controls {
+.sp-page {
+    min-height: 100vh;
     display: flex;
-    flex-direction: column;
-    gap: 15px;
-    background: white;
+    align-items: center;
+    justify-content: center;
     padding: 20px;
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow-md);
-    width: 300px;
+    font-family: var(--font-body);
 }
 
-.sp-buttons {
+.sp-layout {
+    display: flex;
+    gap: 28px;
+    align-items: flex-start;
+    max-width: 1200px;
+}
+
+/* ---- Board Section ---- */
+.sp-board-section {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    width: 100%;
 }
 
-.sp-btn {
-    font-size: 14px;
-    border: none;
-    border-radius: 8px;
-    background-color: var(--primary-color);
-    color: #FFFFFF;
-    font-weight: bold;
-    padding: 12px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.2s ease;
+/* Player bars above/below the board */
+.sp-player-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: var(--bg-surface);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+}
+
+.sp-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    flex-shrink: 0;
+}
+
+.sp-avatar img {
     width: 100%;
+    height: auto;
+}
+
+.sp-player-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.sp-player-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.sp-player-detail {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.sp-thinking-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--gold);
+    margin-left: auto;
+    animation: pulse-dot 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+}
+
+/* ---- Chessboard ---- */
+.sp-page .chessboard {
+    display: grid;
+    grid-template-columns: repeat(8, min(72px, 9vw));
+    grid-template-rows: repeat(8, min(72px, 9vw));
+    border: 3px solid rgba(212, 168, 67, 0.3);
+    border-radius: 4px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), 0 0 60px rgba(212, 168, 67, 0.05);
+}
+
+/* ---- Sidebar ---- */
+.sp-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 220px;
+    padding: 20px;
+    background: var(--bg-surface);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+}
+
+.sp-status {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
     text-align: center;
+    padding: 12px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    line-height: 1.4;
 }
 
-.sp-btn:hover {
-    background-color: var(--accent-color);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-sm);
+.sp-controls-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
-.sp-btn:active {
-    transform: scale(0.98);
+.sp-label {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 500;
 }
 
 .sp-select {
-    font-size: 14px;
-    padding: 10px;
-    border-radius: 8px;
-    border: 2px solid var(--secondary-color);
-    background-color: #f8f9fa;
+    padding: 10px 12px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
     color: var(--text-primary);
-    font-weight: bold;
+    font-size: 0.85rem;
+    font-family: var(--font-body);
+    font-weight: 500;
     cursor: pointer;
-    width: 100%;
+    outline: none;
+    transition: border-color 0.3s;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
 }
 
 .sp-select:focus {
-    outline: none;
-    border-color: var(--accent-color);
+    border-color: var(--gold);
+}
+
+.sp-select:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.sp-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sp-btn {
+    padding: 11px 16px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-family: var(--font-body);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    letter-spacing: 0.3px;
+}
+
+.sp-btn:hover {
+    border-color: var(--border-light);
+    background: rgba(255, 255, 255, 0.06);
+    transform: translateY(-1px);
+}
+
+.sp-btn.primary {
+    background: var(--gold-gradient);
+    color: #0a0a0f;
+    border: none;
+    font-weight: 700;
+}
+
+.sp-btn.primary:hover {
+    box-shadow: 0 0 20px rgba(212, 168, 67, 0.3);
+    transform: translateY(-2px);
 }
 
 .sp-loading {
-    color: var(--text-primary);
-    font-size: 16px;
-    font-weight: bold;
+    font-size: 0.78rem;
+    color: var(--gold);
     text-align: center;
-    padding: 10px;
+    padding: 8px;
+    animation: pulse-dot 1.5s ease-in-out infinite;
 }
 
-/* Ensure message box fits within controls */
-.sp-controls .messagebox {
-    width: 100%;
-    margin-top: 0;
-    box-shadow: none;
-    border: 1px solid var(--secondary-color);
-}
-
-@media screen and (max-width: 1024px) {
-    .sp-controls {
-        width: 100%;
-        max-width: 500px;
-        order: 4;
-        margin-bottom: 20px;
+/* ---- Responsive ---- */
+@media (max-width: 900px) {
+    .sp-layout {
+        flex-direction: column;
+        align-items: center;
     }
-    
-    .sp-buttons {
+
+    .sp-page .chessboard {
+        grid-template-columns: repeat(8, min(11vw, 52px));
+        grid-template-rows: repeat(8, min(11vw, 52px));
+    }
+
+    .sp-sidebar {
+        width: 100%;
+        max-width: 480px;
         flex-direction: row;
         flex-wrap: wrap;
+        gap: 10px;
     }
-    
-    .sp-btn, .sp-select {
+
+    .sp-status {
+        width: 100%;
+    }
+
+    .sp-controls-group,
+    .sp-actions {
+        flex: 1;
+        min-width: 140px;
+    }
+
+    .sp-actions {
+        flex-direction: row;
+    }
+
+    .sp-btn {
         flex: 1;
     }
 }
