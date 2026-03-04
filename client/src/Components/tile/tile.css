@@ -1,35 +1,48 @@
 .tile {
-    display: grid;
-    place-content: center;
-    height: 70px;
-    width: 70px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    position: relative;
 }
 
 .highlighted {
-    border: 5px solid hsl(56, 100%, 50%);
+    position: relative;
+}
+
+.highlighted::after {
+    content: '';
+    position: absolute;
+    width: 30%;
+    height: 30%;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
 }
 
 .black-tile {
-    background-color: #864b30;
+    background-color: var(--board-black);
 }
 
 .white-tile {
-    background-color: #f5c689;
+    background-color: var(--board-white);
 }
 
-.black-tile .chess-piece,
-.white-tile .chess-piece {
-    height: 70px;
-    width: 70px;
-    background-size: 75px;
+/* Optional: Add coordinates if we want to get fancy later */
+
+.chess-piece {
+    width: 90%;
+    height: 90%;
+    background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
-}
-
-.chess-piece:hover {
     cursor: grab;
+    transition: transform 0.1s ease;
 }
 
 .chess-piece:active {
     cursor: grabbing;
+    transform: scale(1.1);
 }
+
+/* Animation for move could be added here if we had a way to detect 'just moved' class */

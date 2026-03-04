@@ -33,8 +33,9 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
-            // Token expired or invalid - clear and redirect
+        const isAuthEndpoint = error.config?.url?.includes('/users/');
+        if (error.response?.status === 401 && !isAuthEndpoint) {
+            // Token expired on a protected route - clear and redirect
             Cookies.remove('jwt');
             window.location.href = '/login';
         }

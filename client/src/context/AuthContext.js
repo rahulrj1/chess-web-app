@@ -46,16 +46,21 @@ export function AuthProvider({ children }) {
      * Login - save token and fetch user
      */
     const login = useCallback(async (playerId, password) => {
-        const data = await authApi.login(playerId, password);
-        
-        if (data.msg === 'logsuc' && data.token) {
-            Cookies.set('jwt', data.token);
-            setUser(data.user);
-            setIsAuthenticated(true);
-            return { success: true };
+        try {
+            const data = await authApi.login(playerId, password);
+            
+            if (data.msg === 'login_success' && data.token) {
+                Cookies.set('jwt', data.token);
+                setUser(data.user);
+                setIsAuthenticated(true);
+                return { success: true };
+            }
+            
+            return { success: false, message: data.msg || 'Login failed' };
+        } catch (error) {
+            const serverMessage = error.response?.data?.message;
+            return { success: false, message: serverMessage || 'Server error. Please try again.' };
         }
-        
-        return { success: false, message: data.msg };
     }, []);
 
     /**

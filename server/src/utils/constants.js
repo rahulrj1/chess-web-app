@@ -20,8 +20,9 @@ const ROOM = {
 const AUTH_MESSAGES = {
     VERIFIED: 'verified',
     NOT_VERIFIED: 'not-verified',
-    LOGIN_SUCCESS: 'logsuc',
-    LOGIN_FAILED: 'nologsuc',
+    LOGIN_SUCCESS: 'login_success',
+    USER_NOT_FOUND: 'User not found. Please check your username.',
+    WRONG_PASSWORD: 'Incorrect password. Please try again.',
 };
 
 const SOCKET_EVENTS = {

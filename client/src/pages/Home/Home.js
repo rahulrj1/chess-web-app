@@ -8,7 +8,6 @@ import { useHistory } from 'react-router-dom';
 import { useAuth } from '../../context';
 import usePanel from '../../hooks/usePanel';
 import generateId from '../../utils/random';
-import bg from '../../assets/images/1.jpg';
 import './Home.css';
 
 export default function Home() {
@@ -35,60 +34,77 @@ export default function Home() {
     };
 
     return (
-        <div
-            className="home_screen"
-            style={{ backgroundImage: `url(${bg})`, backgroundRepeat: 'no-repeat', backgroundSize: 'cover' }}
-        >
-            <div ref={containerRef} id="container">
+        <div className="home_screen">
+            <div ref={containerRef} className="panel-container">
                 {/* Profile Panel */}
                 <div className="form-container sign-up-container">
-                    <form>
-                        <h1>Account Detail</h1>
-                        <br /><br />
-                        <h2>Name : {user?.playerName}</h2>
-                        <h2>Username : {user?.playerId}</h2>
-                        <h2>Email : {user?.playerEmailId}</h2>
-                        <br />
-                        <h2>Rating : {user?.playerRating}</h2>
-                    </form>
+                    <div className="panel-content">
+                        <div className="chess-icon">&#9818;</div>
+                        <h1>Profile</h1>
+                        <p className="subtitle">Your account details</p>
+                        <div className="profile-details">
+                            <div className="profile-row">
+                                <span className="label">Name</span>
+                                <span className="value">{user?.playerName || '—'}</span>
+                            </div>
+                            <div className="profile-row">
+                                <span className="label">Username</span>
+                                <span className="value">{user?.playerId || '—'}</span>
+                            </div>
+                            <div className="profile-row">
+                                <span className="label">Email</span>
+                                <span className="value">{user?.playerEmailId || '—'}</span>
+                            </div>
+                        </div>
+                        <div className="rating-badge">
+                            &#9733; Rating: {user?.playerRating || 1200}
+                        </div>
+                    </div>
                 </div>
 
                 {/* Game Panel */}
                 <div className="form-container sign-in-container">
-                    <form>
-                        <h1>Start Game</h1>
-                        <br />
-                        <button onClick={() => history.push('/play/ai')}>Play vs AI</button>
-                        <br /><br />
-                        <button onClick={handleRandomJoin}>Join Random GAME</button>
-                        <br /><br />
-                        <input
-                            type="text"
-                            value={gameCode}
-                            placeholder="Enter New Room or enter Friend's code"
-                            onChange={(e) => setGameCode(e.target.value)}
-                            required
-                        />
-                        <br />
-                        <button onClick={handleStartClick}>Start New Game</button>
-                        <br /><br />
-                    </form>
+                    <div className="panel-content">
+                        <div className="chess-icon">&#9822;</div>
+                        <h1>Play Chess</h1>
+                        <p className="subtitle">Choose your game mode</p>
+                        <div className="game-actions">
+                            <button className="action-btn primary" onClick={() => history.push('/play/ai')}>
+                                &#9817; Play vs AI
+                            </button>
+                            <button className="action-btn secondary" onClick={handleRandomJoin}>
+                                &#9812; Random Match
+                            </button>
+                            <div className="divider">or join a room</div>
+                            <div className="room-group">
+                                <input
+                                    className="room-input"
+                                    type="text"
+                                    value={gameCode}
+                                    placeholder="Enter room code"
+                                    onChange={(e) => setGameCode(e.target.value)}
+                                />
+                                <button className="join-btn" onClick={handleStartClick}>
+                                    Join
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Overlay */}
                 <div className="overlay-container">
                     <div className="overlay">
                         <div className="overlay-panel overlay-left">
-                            <h1>Join Battle</h1>
-                            <p>Enter unique Code to start New Game or Join Friend's Game with Game code</p>
-                            <button className="ghost" onClick={showLeftPanel}>Start Game</button>
+                            <h1>&#9813; Play</h1>
+                            <p>Start a new game, play against AI, or challenge a friend with a room code.</p>
+                            <button className="ghost-btn" onClick={showLeftPanel}>Start Game</button>
                         </div>
                         <div className="overlay-panel overlay-right">
-                            <h1>User Details</h1>
-                            <p>View your personal details</p>
-                            <button className="ghost" onClick={showRightPanel}>Profile</button>
-                            <br />
-                            <button className="ghost" onClick={handleLogout}>Logout</button>
+                            <h1>&#9818; Your Profile</h1>
+                            <p>View your stats and account details.</p>
+                            <button className="ghost-btn" onClick={showRightPanel}>Profile</button>
+                            <button className="ghost-btn logout" onClick={handleLogout}>Logout</button>
                         </div>
                     </div>
                 </div>

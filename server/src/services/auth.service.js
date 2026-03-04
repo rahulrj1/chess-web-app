@@ -62,14 +62,14 @@ const login = async ({ id, password }) => {
     const user = await User.findByPlayerId(id);
     
     if (!user) {
-        throw ApiError.unauthorized(AUTH_MESSAGES.LOGIN_FAILED);
+        throw ApiError.unauthorized(AUTH_MESSAGES.USER_NOT_FOUND);
     }
 
     // Verify password
     const isValidPassword = await bcrypt.compare(password, user.playerPassword);
     
     if (!isValidPassword) {
-        throw ApiError.unauthorized('Password is incorrect');
+        throw ApiError.unauthorized(AUTH_MESSAGES.WRONG_PASSWORD);
     }
 
     // Create token

@@ -3,14 +3,14 @@
  * Main chess game view with board, player info, and game controls
  */
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useHistory } from 'react-router-dom';
 import { useAuth } from '../../context';
 import { gameApi } from '../../api';
 import useSocket from '../../hooks/useSocket';
 import Tile from '../../components/Tile/Tile';
 import ChessLogic from '../../utils/CheckMove';
-import { HORIZONTAL_AXIS, VERTICAL_AXIS, INITIAL_BOARD, TILE_SIZE, PIECE_IMAGES } from '../../utils/constants';
+import { INITIAL_BOARD, PIECE_IMAGES } from '../../utils/constants';
 import './Game.css';
 
 export default function Game() {

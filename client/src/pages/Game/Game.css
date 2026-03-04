@@ -1,123 +1,171 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;300;700&display=swap');
-
 .chessboard_wrapper {
     display: flex;
-    overflow: auto;
-}
-
-.chessboard {
-    border: 20px solid rgb(63, 9, 9);
-    display: grid;
-    grid-template-columns: repeat(8, 70px);
-    grid-template-rows: repeat(8, 70px);
-    height: 100%;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
     width: 100%;
-}
-
-.myinfo {
-    position: fixed;
-    bottom: 40px;
-    right: 40px;
-    border: 5px solid rgb(63, 9, 9);
-    background: linear-gradient(90deg, rgba(210, 187, 109, 1) 0%, rgba(255, 255, 255, 1) 100%);
-    box-shadow: 0px 0px 15px black;
-}
-
-.opponentinfo {
-    position: fixed;
-    top: 40px;
-    left: 40px;
-    border: 5px solid rgb(63, 9, 9);
-    box-shadow: 0px 0px 15px white;
-    background: linear-gradient(90deg, rgba(162, 93, 90, 1) 22%, rgba(255, 255, 255, 1) 100%);
-}
-
-.chessboard_wrapper .button {
-    position: fixed;
-    font-size: 22px;
-    bottom: 40px;
-    left: 40px;
-    border: 1px solid white;
-    border-radius: 20px;
-    background-color: #240602;
-    color: #FFFFFF;
-    font-weight: bold;
-    padding: 12px 45px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    cursor: pointer;
-}
-
-.messagebox {
+    height: 100%;
+    flex: 1;
+    gap: 40px;
     padding: 20px;
-    font-size: 22px;
-    position: fixed;
-    top: 40px;
-    right: 40px;
-    border-radius: 10px;
-    background: radial-gradient(circle, rgba(255, 255, 255, 1) 32%, rgba(137, 199, 105, 1) 74%);
-    box-shadow: 0px 0px 10px white;
+    background: transparent;
 }
 
-.card::after,
-.card img {
-    border-radius: 50%;
+/* Player Info Cards */
+.player-card {
+    background: white;
+    border-radius: var(--border-radius);
+    padding: 20px;
+    width: 300px;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    transition: transform 0.3s;
+}
+
+.player-card.active {
+    border: 2px solid var(--accent-color);
+    transform: scale(1.05);
+}
+
+.opponentinfo, .myinfo {
+    /* Resetting old styles */
+    position: static;
+    border: none;
+    background: none;
+    box-shadow: none;
 }
 
 .card {
-    border-radius: 10px;
-    max-width: 300px;
-    max-height: 300px;
-    box-shadow: 0 0 30px rgba(0, 0, 0, .15);
-    margin: 1rem;
+    background: white;
+    border-radius: var(--border-radius);
+    padding: 15px;
     display: flex;
-    transform-style: preserve-3d;
-    overflow: hidden;
+    align-items: center;
+    gap: 15px;
+    width: 100%;
+    box-shadow: var(--shadow-sm);
+}
+
+.card .img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--secondary-color);
+    padding: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .card img {
-    width: 70px;
-    min-width: 70px;
-    padding: 2px;
-    display: block;
-    max-width: 100%;
+    width: 100%;
+    height: auto;
 }
 
-.infos {
-    margin-left: 1.5rem;
+.infos h1 {
+    font-size: 1.2rem;
+    margin: 0;
+    color: var(--primary-color);
 }
 
-.name {
-    margin-bottom: 1rem;
+.infos h3 {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin: 5px 0;
 }
 
-.name h2 {
-    font-size: 1.3rem;
+.infos h2 {
+    font-size: 1rem;
+    color: var(--accent-color);
+    font-weight: bold;
 }
 
-@media screen and (max-width: 1200px) {
-    .card {
-        display: none;
+/* Chessboard */
+.chessboard {
+    display: grid;
+    grid-template-columns: repeat(8, min(80px, 10vw));
+    grid-template-rows: repeat(8, min(80px, 10vw));
+    border: 15px solid var(--dark-brown);
+    border-radius: 4px;
+    box-shadow: var(--shadow-lg);
+}
+
+/* Controls & Status */
+.game-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+
+.button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+    text-align: center;
+}
+
+.button:hover {
+    background-color: var(--accent-color);
+}
+
+.messagebox {
+    background: white;
+    padding: 15px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
+    text-align: center;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-top: 20px;
+    width: 300px;
+}
+
+.check-alert {
+    color: #e74c3c;
+    animation: flash 1s infinite;
+}
+
+@keyframes flash {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .chessboard_wrapper {
+        flex-direction: column;
+        height: auto;
+        padding-top: 80px; /* Space for opponent info if fixed top */
     }
-    .infos {
-        margin-left: 0;
-        margin-top: 1.5rem;
-    }
-}
 
-@media screen and (max-width: 900px) {
-    .card {
-        display: none;
+    .opponentinfo {
+        order: 1;
+        width: 100%;
+        max-width: 500px;
     }
-    .chessboard_wrapper .button {
-        position: fixed;
-        bottom: 5px;
-        left: 5px;
+
+    .chessboard {
+        order: 2;
+        grid-template-columns: repeat(8, min(11vw, 50px));
+        grid-template-rows: repeat(8, min(11vw, 50px));
     }
+
+    .myinfo {
+        order: 3;
+        width: 100%;
+        max-width: 500px;
+    }
+    
     .messagebox {
-        padding: 5px;
-        position: fixed;
-        top: 5px;
-        right: 5px;
+        order: 4;
     }
 }

@@ -17,9 +17,13 @@ const { AUTH_MESSAGES } = require('../utils/constants');
 const register = catchAsync(async (req, res) => {
     const { name, id, email, password } = req.body;
     
-    await authService.register({ name, id, email, password });
+    const user = await authService.register({ name, id, email, password });
     
-    res.status(201).redirect(config.frontendUrl);
+    res.status(201).json({
+        status: 'success',
+        message: 'Account created successfully',
+        user,
+    });
 });
 
 /**

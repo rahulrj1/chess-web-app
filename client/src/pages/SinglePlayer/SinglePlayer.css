@@ -5,88 +5,101 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;300;700&display=swap');
 
+/* Inherits .chessboard_wrapper layout from Game.css if imported globally or we replicate it */
+/* Assuming Game.css styles might not leak if scoped, but App.css is global. */
+/* Let's be safe and ensure SinglePlayer follows the flex pattern */
+
 .sp-controls {
-    position: fixed;
-    bottom: 40px;
-    left: 40px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 15px;
+    background: white;
+    padding: 20px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
+    width: 300px;
 }
 
 .sp-buttons {
     display: flex;
+    flex-direction: column;
     gap: 10px;
-    align-items: center;
+    width: 100%;
 }
 
 .sp-btn {
-    font-size: 16px;
-    border: 1px solid white;
-    border-radius: 20px;
-    background-color: #240602;
+    font-size: 14px;
+    border: none;
+    border-radius: 8px;
+    background-color: var(--primary-color);
     color: #FFFFFF;
     font-weight: bold;
-    padding: 10px 30px;
+    padding: 12px;
     letter-spacing: 1px;
     text-transform: uppercase;
     cursor: pointer;
-    transition: transform 80ms ease-in;
+    transition: all 0.2s ease;
+    width: 100%;
+    text-align: center;
 }
 
 .sp-btn:hover {
-    background-color: #3a1005;
+    background-color: var(--accent-color);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
 }
 
 .sp-btn:active {
-    transform: scale(0.95);
+    transform: scale(0.98);
 }
 
 .sp-select {
-    font-size: 16px;
-    padding: 10px 20px;
-    border-radius: 20px;
-    border: 2px solid #240602;
-    background-color: white;
-    color: #240602;
+    font-size: 14px;
+    padding: 10px;
+    border-radius: 8px;
+    border: 2px solid var(--secondary-color);
+    background-color: #f8f9fa;
+    color: var(--text-primary);
     font-weight: bold;
     cursor: pointer;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    width: 100%;
 }
 
 .sp-select:focus {
     outline: none;
-    border-color: #D49546;
+    border-color: var(--accent-color);
 }
 
 .sp-loading {
-    color: white;
-    font-size: 18px;
+    color: var(--text-primary);
+    font-size: 16px;
     font-weight: bold;
-    text-shadow: 0 0 10px black;
-    animation: pulse 1.5s ease-in-out infinite;
+    text-align: center;
+    padding: 10px;
 }
 
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+/* Ensure message box fits within controls */
+.sp-controls .messagebox {
+    width: 100%;
+    margin-top: 0;
+    box-shadow: none;
+    border: 1px solid var(--secondary-color);
 }
 
-@media screen and (max-width: 900px) {
+@media screen and (max-width: 1024px) {
     .sp-controls {
-        bottom: 5px;
-        left: 5px;
+        width: 100%;
+        max-width: 500px;
+        order: 4;
+        margin-bottom: 20px;
     }
+    
     .sp-buttons {
+        flex-direction: row;
         flex-wrap: wrap;
     }
-    .sp-btn {
-        font-size: 12px;
-        padding: 8px 15px;
-    }
-    .sp-select {
-        font-size: 12px;
-        padding: 8px 15px;
+    
+    .sp-btn, .sp-select {
+        flex: 1;
     }
 }

@@ -18,19 +18,24 @@ export const authApi = {
     },
 
     /**
+     * Register user
+     */
+    register: async (name, playerId, email, password) => {
+        const response = await apiClient.post('/users/register', {
+            name,
+            id: playerId,
+            email,
+            password,
+        });
+        return response.data;
+    },
+
+    /**
      * Get current user profile
      */
     getMe: async () => {
         const response = await apiClient.get('/me');
         return response.data;
-    },
-
-    /**
-     * Register is handled via form POST (redirect flow)
-     * So we just export the URL
-     */
-    getRegisterUrl: () => {
-        return `${apiClient.defaults.baseURL}/users/register`;
     },
 };
 

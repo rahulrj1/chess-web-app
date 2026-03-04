@@ -10,7 +10,7 @@ import useStockfish, { DIFFICULTY_LEVELS } from '../../hooks/useStockfish';
 import Tile from '../../components/Tile/Tile';
 import ChessLogic from '../../utils/CheckMove';
 import { coordsToUci, uciToCoords, movesToPositionString } from '../../utils/moveConverter';
-import { HORIZONTAL_AXIS, VERTICAL_AXIS, INITIAL_BOARD, TILE_SIZE, PIECE_IMAGES } from '../../utils/constants';
+import { INITIAL_BOARD, PIECE_IMAGES } from '../../utils/constants';
 import './SinglePlayer.css';
 
 // Deep clone the initial board so each game starts fresh

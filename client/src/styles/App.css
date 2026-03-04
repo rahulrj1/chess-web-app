@@ -1,6 +1,29 @@
 /**
- * Global Styles
+ * Global Styles & Variables
  */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+:root {
+    /* Color Palette */
+    --primary-color: #1a1a2e;
+    --secondary-color: #f0f0f5;
+    --accent-color: #e67e22;
+    --accent-hover: #d35400;
+    --dark-brown: #16213e;
+    --light-brown: #d7ccc8;
+    --board-black: #795548;
+    --board-white: #efebe9;
+    --text-primary: #1a1a2e;
+    --text-secondary: #7f8c8d;
+    --bg-gradient: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+
+    /* Spacing & Layout */
+    --border-radius: 12px;
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.15);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
 
 * {
     box-sizing: border-box;
@@ -11,22 +34,14 @@
 html, body {
     margin: 0;
     height: 100%;
-    font-family: 'Roboto', sans-serif;
-    background-color: #000121;
+    font-family: 'Poppins', sans-serif;
+    background: var(--bg-gradient);
+    color: var(--text-primary);
+    overflow-x: hidden;
 }
 
 #root {
-    height: 100vh;
-}
-
-.container {
-    display: grid;
-    place-content: center;
-    height: 100vh;
-}
-
-body {
-    background-image: url(../assets/images/1.jpg);
-    background-repeat: no-repeat;
-    background-size: cover;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
