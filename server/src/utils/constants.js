@@ -34,6 +34,8 @@ const SOCKET_EVENTS = {
     GAME_END_CHECKMATE: 'game-end-checkmate',
     GAME_END_STALEMATE: 'game-end-stalemate',
     GAME_END_DRAW: 'game-end-draw',
+    GAME_END_TIMEOUT: 'game-end-timeout',
+    SET_TIME_CONTROL: 'set-time-control',
     USER_LEFT: 'user-left',
     SEND_OPPONENT_INFO: 'send-opponent-info',
     
@@ -45,6 +47,8 @@ const SOCKET_EVENTS = {
     RECEIVE_UPDATE_CHECKMATE: 'receive-update-checkmate',
     RECEIVE_UPDATE_STALEMATE: 'receive-update-stalemate',
     RECEIVE_UPDATE_DRAW: 'receive-update-draw',
+    RECEIVE_UPDATE_TIMEOUT: 'receive-update-timeout',
+    SYNC_TIME_CONTROL: 'sync-time-control',
     OPPONENT_LEFT: 'opponent-left',
     OPPONENT_RECONNECTED: 'opponent-reconnected',
     RECEIVE_OPPONENT_INFO: 'recieve-opponent-info', // Note: typo preserved

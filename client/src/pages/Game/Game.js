@@ -3,15 +3,32 @@
  * Main chess game view with board, player info, and game controls
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, useHistory } from 'react-router-dom';
 import { useAuth } from '../../context';
 import { gameApi } from '../../api';
 import useSocket from '../../hooks/useSocket';
 import Tile from '../../components/Tile/Tile';
+import GameOverlay from '../../components/GameOverlay/GameOverlay';
 import ChessLogic from '../../utils/CheckMove';
 import { INITIAL_BOARD, PIECE_IMAGES } from '../../utils/constants';
 import './Game.css';
+
+const TIME_CONTROLS = {
+    '5+3': { initial: 300, increment: 3, label: '5 + 3 Blitz' },
+    '10+0': { initial: 600, increment: 0, label: '10 + 0 Rapid' },
+    '15+10': { initial: 900, increment: 10, label: '15 + 10 Rapid' },
+    '30+0': { initial: 1800, increment: 0, label: '30 min Classical' },
+    'none': { initial: null, increment: 0, label: 'No Timer' },
+};
+
+function formatTime(seconds) {
+    if (seconds == null) return '—';
+    if (seconds <= 0) return '0:00';
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+}
 
 export default function Game() {
     const { roomId } = useParams();
@@ -29,6 +46,16 @@ export default function Game() {
     const [pendingPromotion, setPendingPromotion] = useState(null);
     const [halfMoveClock, setHalfMoveClock] = useState(0);
     const [positionHistory, setPositionHistory] = useState([]);
+    const [lastMove, setLastMove] = useState(null);
+    const [gameOver, setGameOver] = useState(false);
+    const [overlay, setOverlay] = useState({ type: null, message: '' });
+
+    // Timer state
+    const [timeControl, setTimeControl] = useState('5+3');
+    const [whiteTime, setWhiteTime] = useState(TIME_CONTROLS['5+3'].initial);
+    const [blackTime, setBlackTime] = useState(TIME_CONTROLS['5+3'].initial);
+    const [timerStarted, setTimerStarted] = useState(false);
+    const timerRef = useRef(null);
 
     const [opponentUser, setOpponentUser] = useState({
         playerName: 'Waiting...',
@@ -42,6 +69,48 @@ export default function Game() {
 
     const { socket, emit } = useSocket(roomId, pieces);
     const chessLogic = useRef(new ChessLogic()).current;
+    const yourColorRef = useRef(yourColor);
+    useEffect(() => { yourColorRef.current = yourColor; }, [yourColor]);
+
+    // Timer countdown
+    useEffect(() => {
+        if (timerRef.current) clearInterval(timerRef.current);
+
+        const tc = TIME_CONTROLS[timeControl];
+        if (!tc.initial || !timerStarted || gameOver) return;
+
+        timerRef.current = setInterval(() => {
+            if (whoseChanceItIs === 'white') {
+                setWhiteTime(prev => {
+                    if (prev <= 1) {
+                        clearInterval(timerRef.current);
+                        const msg = "Time's up! Black wins on time.";
+                        setMessage(msg);
+                        setGameOver(true);
+                        setOverlay({ type: yourColorRef.current === 'black' ? 'victory' : 'defeat', message: msg });
+                        emit('game-end-timeout', 'white');
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            } else {
+                setBlackTime(prev => {
+                    if (prev <= 1) {
+                        clearInterval(timerRef.current);
+                        const msg = "Time's up! White wins on time.";
+                        setMessage(msg);
+                        setGameOver(true);
+                        setOverlay({ type: yourColorRef.current === 'white' ? 'victory' : 'defeat', message: msg });
+                        emit('game-end-timeout', 'black');
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }
+        }, 1000);
+
+        return () => clearInterval(timerRef.current);
+    }, [whoseChanceItIs, timerStarted, gameOver, timeControl, emit]);
 
     useEffect(() => {
         if (!socket || !user) return;
@@ -69,10 +138,19 @@ export default function Game() {
         if (!socket) return;
         const checkmateHandler = (loseColor) => {
             const winColor = loseColor === 'black' ? 'white' : 'black';
-            setMessage(`Checkmate! ${winColor.charAt(0).toUpperCase() + winColor.slice(1)} wins!`);
+            const msg = `Checkmate! ${winColor.charAt(0).toUpperCase() + winColor.slice(1)} wins!`;
+            setMessage(msg);
+            setGameOver(true);
+            setOverlay(prev => {
+                const iWon = winColor === yourColorRef.current;
+                return { type: iWon ? 'victory' : 'defeat', message: msg };
+            });
         };
         const stalemateHandler = () => {
-            setMessage("Stalemate! It's a draw.");
+            const msg = "Stalemate! It's a draw.";
+            setMessage(msg);
+            setGameOver(true);
+            setOverlay({ type: 'draw', message: msg });
         };
         const drawHandler = (reason) => {
             const reasons = {
@@ -80,37 +158,59 @@ export default function Game() {
                 'draw-fifty': 'Draw — fifty-move rule.',
                 'draw-repetition': 'Draw — threefold repetition.',
             };
-            setMessage(reasons[reason] || "It's a draw.");
+            const msg = reasons[reason] || "It's a draw.";
+            setMessage(msg);
+            setGameOver(true);
+            setOverlay({ type: 'draw', message: msg });
+        };
+        const timeoutHandler = (loserColor) => {
+            const winner = loserColor === 'white' ? 'Black' : 'White';
+            const msg = `Time's up! ${winner} wins on time.`;
+            setMessage(msg);
+            setGameOver(true);
+            setOverlay(prev => {
+                const iWon = loserColor !== yourColorRef.current;
+                return { type: iWon ? 'victory' : 'defeat', message: msg };
+            });
         };
         const opponentLeftHandler = () => {
             setMessage('Opponent disconnected.');
         };
         const opponentReconnectedHandler = () => {
-            if (message === 'Opponent disconnected.') {
-                setMessage('');
-            }
+            setMessage(prev => prev === 'Opponent disconnected.' ? '' : prev);
         };
         socket.on('receive-update-checkmate', checkmateHandler);
         socket.on('receive-update-stalemate', stalemateHandler);
         socket.on('receive-update-draw', drawHandler);
+        socket.on('receive-update-timeout', timeoutHandler);
         socket.on('opponent-left', opponentLeftHandler);
         socket.on('opponent-reconnected', opponentReconnectedHandler);
         return () => {
             socket.off('receive-update-checkmate', checkmateHandler);
             socket.off('receive-update-stalemate', stalemateHandler);
             socket.off('receive-update-draw', drawHandler);
+            socket.off('receive-update-timeout', timeoutHandler);
             socket.off('opponent-left', opponentLeftHandler);
             socket.off('opponent-reconnected', opponentReconnectedHandler);
         };
-    }, [socket, message]);
+    }, [socket]);
 
     useEffect(() => {
         if (!socket) return;
-        const receivePiecesHandler = (receivedPieces, nextTurn, receivedEp, uciMove) => {
+        const receivePiecesHandler = (receivedPieces, nextTurn, receivedEp, uciMove, timerData) => {
             setPieces(receivedPieces);
             setWhoseChanceItIs(nextTurn);
             setEnPassantTarget(receivedEp || null);
-            if (uciMove) setMoveHistory(prev => [...prev, uciMove]);
+            if (uciMove) {
+                setMoveHistory(prev => [...prev, uciMove]);
+                const coords = parseUciForLastMove(uciMove);
+                if (coords) setLastMove(coords);
+            }
+            if (timerData) {
+                setWhiteTime(timerData.whiteTime);
+                setBlackTime(timerData.blackTime);
+                if (!timerStarted) setTimerStarted(true);
+            }
             setMessage('');
         };
         const loadBoardHandler = (data, turn, blackEmail, whiteEmail) => {
@@ -119,13 +219,22 @@ export default function Game() {
             setBMail(blackEmail);
             setWMail(whiteEmail);
         };
+        const timeControlSyncHandler = (tc) => {
+            if (tc && TIME_CONTROLS[tc]) {
+                setTimeControl(tc);
+                setWhiteTime(TIME_CONTROLS[tc].initial);
+                setBlackTime(TIME_CONTROLS[tc].initial);
+            }
+        };
         socket.on('recieve-pieces', receivePiecesHandler);
         socket.on('load-chessboard', loadBoardHandler);
+        socket.on('sync-time-control', timeControlSyncHandler);
         return () => {
             socket.off('recieve-pieces', receivePiecesHandler);
             socket.off('load-chessboard', loadBoardHandler);
+            socket.off('sync-time-control', timeControlSyncHandler);
         };
-    }, [socket]);
+    }, [socket, timerStarted]);
 
     useEffect(() => {
         if (bMail === user?.playerEmailId) setYourColor('black');
@@ -137,13 +246,26 @@ export default function Game() {
         const handler = (playerColor) => {
             setYourColor(playerColor);
             emit('save-my-color', user?.playerEmailId, playerColor);
+            // First player (white) sets the time control for the room
+            if (playerColor === 'white') {
+                emit('set-time-control', timeControl);
+            }
         };
         socket.on('player-color', handler);
         return () => socket.off('player-color', handler);
-    }, [socket, user?.playerEmailId, emit]);
+    }, [socket, user?.playerEmailId, emit, timeControl]);
+
+    const handleTimeControlChange = (e) => {
+        const tc = e.target.value;
+        setTimeControl(tc);
+        const ctrl = TIME_CONTROLS[tc];
+        setWhiteTime(ctrl.initial);
+        setBlackTime(ctrl.initial);
+        emit('set-time-control', tc);
+    };
 
     const handleDragStart = (e, piece) => {
-        if (piece.color !== yourColor || whoseChanceItIs !== yourColor || pendingPromotion) {
+        if (piece.color !== yourColor || whoseChanceItIs !== yourColor || pendingPromotion || gameOver) {
             e.preventDefault();
             return;
         }
@@ -221,22 +343,45 @@ export default function Game() {
 
         const uciMove = `${String.fromCharCode(97 + fromY)}${8 - fromX}${String.fromCharCode(97 + col)}${8 - row}${promotionType || ''}`;
 
+        // Apply increment to the moving player's clock
+        const tc = TIME_CONTROLS[timeControl];
+        let newWhiteTime = whiteTime;
+        let newBlackTime = blackTime;
+        if (tc.initial) {
+            if (whoseChanceItIs === 'white') {
+                newWhiteTime = whiteTime + tc.increment;
+                setWhiteTime(newWhiteTime);
+            } else {
+                newBlackTime = blackTime + tc.increment;
+                setBlackTime(newBlackTime);
+            }
+            if (!timerStarted) setTimerStarted(true);
+        }
+
         setPieces(newPieces);
+        setLastMove({ fromX, fromY, toX: row, toY: col });
         setMoveHistory(prev => [...prev, uciMove]);
         setWhoseChanceItIs(nextTurn);
 
+        const timerData = tc.initial ? { whiteTime: newWhiteTime, blackTime: newBlackTime } : null;
         const drawState = { halfMoveClock: newHmc, positionHistory: newPosHist };
         const gameState = chessLogic.getGameState(nextTurn, newPieces, newEp, drawState);
-        emit('send-pieces', newPieces, nextTurn, newEp, uciMove);
+        emit('send-pieces', newPieces, nextTurn, newEp, uciMove, timerData);
         emit('save-chessboard', newPieces, nextTurn, user?.playerEmailId);
 
         if (gameState === 'checkmate') {
             emit('game-end-checkmate', nextTurn);
             const winner = nextTurn === 'white' ? 'Black' : 'White';
-            setMessage(`Checkmate! ${winner} wins!`);
+            const msg = `Checkmate! ${winner} wins!`;
+            setMessage(msg);
+            setGameOver(true);
+            setOverlay({ type: 'victory', message: msg });
         } else if (gameState === 'stalemate') {
             emit('game-end-stalemate');
-            setMessage("Stalemate! It's a draw.");
+            const msg = "Stalemate! It's a draw.";
+            setMessage(msg);
+            setGameOver(true);
+            setOverlay({ type: 'draw', message: msg });
         } else if (gameState.startsWith('draw-')) {
             emit('game-end-draw', gameState);
             const reasons = {
@@ -244,7 +389,10 @@ export default function Game() {
                 'draw-fifty': 'Draw — fifty-move rule.',
                 'draw-repetition': 'Draw — threefold repetition.',
             };
-            setMessage(reasons[gameState] || "It's a draw.");
+            const msg = reasons[gameState] || "It's a draw.";
+            setMessage(msg);
+            setGameOver(true);
+            setOverlay({ type: 'draw', message: msg });
         }
     };
 
@@ -294,6 +442,7 @@ export default function Game() {
                     row={row}
                     col={col}
                     activeTile={activeTile}
+                    lastMove={lastMove}
                     onDragStart={handleDragStart}
                     onDragOver={handleDragOver}
                     onDrop={handleDrop}
@@ -308,6 +457,12 @@ export default function Game() {
     const whitePawn = PIECE_IMAGES.white.pawn;
     const blackPawn = PIECE_IMAGES.black.pawn;
     const isMyTurn = whoseChanceItIs === yourColor;
+    const tc = TIME_CONTROLS[timeControl];
+
+    // Top bar = opponent, bottom bar = you
+    const opponentColor = yourColor === 'white' ? 'black' : 'white';
+    const opponentTime = opponentColor === 'white' ? whiteTime : blackTime;
+    const myTime = yourColor === 'white' ? whiteTime : blackTime;
 
     return (
         <div className="game-page">
@@ -323,7 +478,12 @@ export default function Game() {
                                 {opponentUser.playerId ? `@${opponentUser.playerId}` : 'Waiting for opponent...'}
                             </span>
                         </div>
-                        <span className="game-rating">{opponentUser.playerRating}</span>
+                        {tc.initial && (
+                            <span className={`game-timer ${!isMyTurn ? 'timer-active' : ''} ${opponentTime <= 30 ? 'timer-low' : ''}`}>
+                                {formatTime(opponentTime)}
+                            </span>
+                        )}
+                        {!tc.initial && <span className="game-rating">{opponentUser.playerRating}</span>}
                     </div>
 
                     <div className="chessboard">{board}</div>
@@ -336,7 +496,12 @@ export default function Game() {
                             <span className="game-player-name">{user?.playerName || 'You'}</span>
                             <span className="game-player-detail">@{user?.playerId}</span>
                         </div>
-                        <span className="game-rating">{user?.playerRating || '—'}</span>
+                        {tc.initial && (
+                            <span className={`game-timer ${isMyTurn ? 'timer-active' : ''} ${myTime <= 30 ? 'timer-low' : ''}`}>
+                                {formatTime(myTime)}
+                            </span>
+                        )}
+                        {!tc.initial && <span className="game-rating">{user?.playerRating || '—'}</span>}
                     </div>
                 </div>
 
@@ -361,6 +526,18 @@ export default function Game() {
                     {yourColor && (
                         <div className="game-color-badge">
                             Playing as <strong>{yourColor}</strong>
+                        </div>
+                    )}
+
+                    {/* Time control selector — only before first move */}
+                    {yourColor === 'white' && moveHistory.length === 0 && !gameOver && (
+                        <div className="game-time-control">
+                            <span className="game-tc-label">Time Control</span>
+                            <select className="game-tc-select" value={timeControl} onChange={handleTimeControlChange}>
+                                {Object.entries(TIME_CONTROLS).map(([key, val]) => (
+                                    <option key={key} value={key}>{val.label}</option>
+                                ))}
+                            </select>
                         </div>
                     )}
 
@@ -401,6 +578,24 @@ export default function Game() {
                     </div>
                 </div>
             )}
+
+            {overlay.type && (
+                <GameOverlay
+                    type={overlay.type}
+                    message={overlay.message}
+                    onDismiss={() => setOverlay({ type: null, message: '' })}
+                />
+            )}
         </div>
     );
+}
+
+function parseUciForLastMove(uci) {
+    if (!uci || uci.length < 4) return null;
+    return {
+        fromX: 8 - parseInt(uci[1]),
+        fromY: uci.charCodeAt(0) - 97,
+        toX: 8 - parseInt(uci[3]),
+        toY: uci.charCodeAt(2) - 97,
+    };
 }

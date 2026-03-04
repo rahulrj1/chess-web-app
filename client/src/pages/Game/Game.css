@@ -92,6 +92,41 @@
     flex-shrink: 0;
 }
 
+/* ---- Timer ---- */
+.game-timer {
+    font-family: 'Courier New', monospace;
+    font-size: 1.15rem;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    flex-shrink: 0;
+    min-width: 60px;
+    text-align: center;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+}
+
+.game-timer.timer-active {
+    background: rgba(212, 168, 67, 0.12);
+    border-color: rgba(212, 168, 67, 0.4);
+    color: var(--gold);
+    box-shadow: 0 0 10px rgba(212, 168, 67, 0.1);
+}
+
+.game-timer.timer-low {
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.4);
+    animation: timer-pulse 1s ease-in-out infinite;
+}
+
+@keyframes timer-pulse {
+    0%, 100% { box-shadow: 0 0 0 rgba(239, 68, 68, 0); }
+    50% { box-shadow: 0 0 12px rgba(239, 68, 68, 0.25); }
+}
+
 /* ---- Chessboard ---- */
 .game-page .chessboard {
     display: grid;
@@ -173,6 +208,44 @@
 .game-color-badge strong {
     color: var(--gold);
     text-transform: capitalize;
+}
+
+/* ---- Time Control Selector ---- */
+.game-time-control {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.game-tc-label {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 500;
+}
+
+.game-tc-select {
+    padding: 10px 12px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    font-family: var(--font-body);
+    font-weight: 500;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.3s;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+}
+
+.game-tc-select:focus {
+    border-color: var(--gold);
 }
 
 .game-exit-btn {

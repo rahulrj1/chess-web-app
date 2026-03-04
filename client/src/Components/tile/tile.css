@@ -18,6 +18,7 @@
     height: 30%;
     background-color: rgba(0, 0, 0, 0.2);
     border-radius: 50%;
+    z-index: 2;
 }
 
 .black-tile {
@@ -28,6 +29,16 @@
     background-color: var(--board-white);
 }
 
+/* Last move highlight — source square */
+.last-move-from {
+    background-color: rgba(186, 170, 68, 0.45) !important;
+}
+
+/* Last move highlight — destination square */
+.last-move-to {
+    background-color: rgba(205, 195, 75, 0.5) !important;
+}
+
 .chess-piece {
     width: 90%;
     height: 90%;
@@ -36,11 +47,32 @@
     background-position: center;
     cursor: grab;
     transition: transform 0.1s ease;
+    z-index: 1;
 }
 
 .chess-piece:active {
     cursor: grabbing;
     transform: scale(1.1);
+}
+
+/* Pop-in animation for piece that just moved */
+.piece-just-moved {
+    animation: piece-pop 0.25s ease-out;
+}
+
+@keyframes piece-pop {
+    0% {
+        transform: scale(0.6);
+        opacity: 0.5;
+    }
+    60% {
+        transform: scale(1.08);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
 /* Board coordinate labels */
@@ -53,6 +85,7 @@
     line-height: 1;
     pointer-events: none;
     user-select: none;
+    z-index: 3;
 }
 
 .coord-file {
@@ -64,6 +97,7 @@
     line-height: 1;
     pointer-events: none;
     user-select: none;
+    z-index: 3;
 }
 
 .coord-light {

@@ -8,6 +8,7 @@ import { useHistory } from 'react-router-dom';
 import { useAuth } from '../../context';
 import useStockfish, { DIFFICULTY_LEVELS } from '../../hooks/useStockfish';
 import Tile from '../../components/Tile/Tile';
+import GameOverlay from '../../components/GameOverlay/GameOverlay';
 import ChessLogic from '../../utils/CheckMove';
 import { coordsToUci, uciToCoords, movesToPositionString } from '../../utils/moveConverter';
 import { INITIAL_BOARD, PIECE_IMAGES } from '../../utils/constants';
@@ -30,6 +31,8 @@ export default function SinglePlayer() {
     const [moveHistory, setMoveHistory] = useState([]);
     const [enPassantTarget, setEnPassantTarget] = useState(null);
     const [pendingPromotion, setPendingPromotion] = useState(null);
+    const [lastMove, setLastMove] = useState(null);
+    const [overlay, setOverlay] = useState({ type: null, message: '' });
 
     // Draw detection state
     const [halfMoveClock, setHalfMoveClock] = useState(0);
@@ -60,27 +63,33 @@ export default function SinglePlayer() {
 
     const applyGameResult = useCallback((gameState, nextTurnColor) => {
         switch (gameState) {
-            case 'checkmate':
-                setMessage(nextTurnColor === playerColor
-                    ? "Checkmate! Stockfish wins."
-                    : "Checkmate! You win!");
+            case 'checkmate': {
+                const isPlayerLoss = nextTurnColor === playerColor;
+                const msg = isPlayerLoss ? "Checkmate! Stockfish wins." : "Checkmate! You win!";
+                setMessage(msg);
                 setGameOver(true);
+                setOverlay({ type: isPlayerLoss ? 'defeat' : 'victory', message: msg });
                 return true;
+            }
             case 'stalemate':
                 setMessage("Stalemate! It's a draw.");
                 setGameOver(true);
+                setOverlay({ type: 'draw', message: "Stalemate — neither side wins." });
                 return true;
             case 'draw-insufficient':
                 setMessage("Draw — insufficient material.");
                 setGameOver(true);
+                setOverlay({ type: 'draw', message: "Draw — insufficient material." });
                 return true;
             case 'draw-fifty':
                 setMessage("Draw — fifty-move rule.");
                 setGameOver(true);
+                setOverlay({ type: 'draw', message: "Draw — fifty-move rule." });
                 return true;
             case 'draw-repetition':
                 setMessage("Draw — threefold repetition.");
                 setGameOver(true);
+                setOverlay({ type: 'draw', message: "Draw — threefold repetition." });
                 return true;
             default:
                 return false;
@@ -148,6 +157,7 @@ export default function SinglePlayer() {
         setPositionHistory(newPosHist);
 
         setPieces(newPieces);
+        setLastMove({ fromX, fromY, toX, toY });
         const gameState = checkGameResult(playerColor, newPieces, newEp, newHmc, newPosHist);
         if (!applyGameResult(gameState, playerColor)) {
             if (chessLogic.isKingInCheck(playerColor, newPieces)) {
@@ -248,6 +258,7 @@ export default function SinglePlayer() {
         setPositionHistory(newPosHist);
 
         setPieces(newPieces);
+        setLastMove({ fromX, fromY, toX: row, toY: col });
         const newHistory = [...moveHistoryRef.current, uciMove];
         setMoveHistory(newHistory);
         setWhoseChanceItIs(aiColor);
@@ -294,6 +305,8 @@ export default function SinglePlayer() {
         setPendingPromotion(null);
         setHalfMoveClock(0);
         setPositionHistory([]);
+        setLastMove(null);
+        setOverlay({ type: 'start', message: '' });
         resetEngine();
     };
 
@@ -308,6 +321,7 @@ export default function SinglePlayer() {
                     row={row}
                     col={j}
                     activeTile={activeTile}
+                    lastMove={lastMove}
                     onDragStart={handleDragStart}
                     onDragOver={handleDragOver}
                     onDrop={handleDrop}
@@ -414,6 +428,14 @@ export default function SinglePlayer() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {overlay.type && (
+                <GameOverlay
+                    type={overlay.type}
+                    message={overlay.message}
+                    onDismiss={() => setOverlay({ type: null, message: '' })}
+                />
             )}
         </div>
     );

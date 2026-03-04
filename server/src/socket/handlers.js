@@ -69,7 +69,7 @@ const registerRoomHandlers = (io, socket, roomId) => {
         }
     });
 
-    socket.on(SOCKET_EVENTS.SEND_PIECES, (pieces, nextTurn, enPassantTarget, uciMove) => {
+    socket.on(SOCKET_EVENTS.SEND_PIECES, (pieces, nextTurn, enPassantTarget, uciMove, timerData) => {
         const state = gameStateStore.getState(roomId);
 
         if (state && uciMove) {
@@ -86,9 +86,8 @@ const registerRoomHandlers = (io, socket, roomId) => {
             }
         }
 
-        // Move is valid (or no state to check against), update and broadcast
         gameStateStore.setState(roomId, pieces, nextTurn, enPassantTarget);
-        socket.to(roomId).emit(SOCKET_EVENTS.RECEIVE_PIECES, pieces, nextTurn, enPassantTarget, uciMove);
+        socket.to(roomId).emit(SOCKET_EVENTS.RECEIVE_PIECES, pieces, nextTurn, enPassantTarget, uciMove, timerData);
     });
 
     socket.on(SOCKET_EVENTS.SAVE_CHESSBOARD, async (newData, newChance, playerEmail) => {
@@ -122,6 +121,15 @@ const registerRoomHandlers = (io, socket, roomId) => {
         } catch (error) {
             console.error('game-end-stalemate error:', error.message);
         }
+    });
+
+    socket.on(SOCKET_EVENTS.SET_TIME_CONTROL, (tc) => {
+        socket.to(roomId).emit(SOCKET_EVENTS.SYNC_TIME_CONTROL, tc);
+    });
+
+    socket.on(SOCKET_EVENTS.GAME_END_TIMEOUT, (loserColor) => {
+        gameStateStore.removeState(roomId);
+        socket.to(roomId).emit(SOCKET_EVENTS.RECEIVE_UPDATE_TIMEOUT, loserColor);
     });
 
     socket.on(SOCKET_EVENTS.USER_LEFT, () => {

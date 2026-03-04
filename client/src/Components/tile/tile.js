@@ -8,7 +8,7 @@ import './Tile.css';
 
 const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 
-function Tile({ pieces, row, col, activeTile, onDragStart, onDragOver, onDrop, showCoords, isBottom, isLeft }) {
+function Tile({ pieces, row, col, activeTile, lastMove, onDragStart, onDragOver, onDrop, showCoords, isBottom, isLeft }) {
     const piece = useMemo(() => {
         return pieces.find(p => p.x === row && p.y === col) || null;
     }, [pieces, row, col]);
@@ -18,8 +18,17 @@ function Tile({ pieces, row, col, activeTile, onDragStart, onDragOver, onDrop, s
         return activeTile.some(p => p.x === row && p.y === col);
     }, [activeTile, row, col]);
 
+    const isLastMoveFrom = lastMove && lastMove.fromX === row && lastMove.fromY === col;
+    const isLastMoveTo = lastMove && lastMove.toX === row && lastMove.toY === col;
+
     const isDark = (row + col) % 2 === 0;
-    const tileClass = `tile ${isDark ? 'black-tile' : 'white-tile'}${isHighlighted ? ' highlighted' : ''}`;
+
+    let tileClass = `tile ${isDark ? 'black-tile' : 'white-tile'}`;
+    if (isHighlighted) tileClass += ' highlighted';
+    if (isLastMoveFrom) tileClass += ' last-move-from';
+    if (isLastMoveTo) tileClass += ' last-move-to';
+
+    const pieceClass = `chess-piece${isLastMoveTo ? ' piece-just-moved' : ''}`;
 
     return (
         <div
@@ -30,7 +39,7 @@ function Tile({ pieces, row, col, activeTile, onDragStart, onDragOver, onDrop, s
             {piece && (
                 <div
                     style={{ backgroundImage: `url(${piece.image})` }}
-                    className="chess-piece"
+                    className={pieceClass}
                     draggable={true}
                     onDragStart={(e) => onDragStart(e, piece)}
                 />
