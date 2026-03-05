@@ -50,7 +50,10 @@ const handleJoin = (io, socket) => async (roomId, pieces) => {
             socket.emit(SOCKET_EVENTS.ROOM_FULL, roomId, true);
         }
 
-        registerRoomHandlers(io, socket, roomId);
+        if (!socket._roomHandlersRegistered) {
+            socket._roomHandlersRegistered = true;
+            registerRoomHandlers(io, socket, roomId);
+        }
     } catch (error) {
         console.error('Socket join error:', error.message);
         socket.emit(SOCKET_EVENTS.ERROR, 'Failed to join room');

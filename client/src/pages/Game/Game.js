@@ -72,6 +72,9 @@ export default function Game() {
     const yourColorRef = useRef(yourColor);
     useEffect(() => { yourColorRef.current = yourColor; }, [yourColor]);
 
+    // Snapshot for rollback if server rejects a move
+    const preMoveSnapshot = useRef(null);
+
     // Timer countdown
     useEffect(() => {
         if (timerRef.current) clearInterval(timerRef.current);
@@ -111,6 +114,29 @@ export default function Game() {
 
         return () => clearInterval(timerRef.current);
     }, [whoseChanceItIs, timerStarted, gameOver, timeControl, emit]);
+
+    // Revert board state if server rejects our move
+    useEffect(() => {
+        if (!socket) return;
+        const errorHandler = (errorMsg) => {
+            if (errorMsg === 'Invalid move' && preMoveSnapshot.current) {
+                const snap = preMoveSnapshot.current;
+                setPieces(snap.pieces);
+                setWhoseChanceItIs(snap.whoseChanceItIs);
+                setEnPassantTarget(snap.enPassantTarget);
+                setHalfMoveClock(snap.halfMoveClock);
+                setPositionHistory(snap.positionHistory);
+                setLastMove(snap.lastMove);
+                setMoveHistory(snap.moveHistory);
+                setWhiteTime(snap.whiteTime);
+                setBlackTime(snap.blackTime);
+                setMessage('Move rejected — please try again.');
+                preMoveSnapshot.current = null;
+            }
+        };
+        socket.on('error', errorHandler);
+        return () => socket.off('error', errorHandler);
+    }, [socket]);
 
     useEffect(() => {
         if (!socket || !user) return;
@@ -198,6 +224,7 @@ export default function Game() {
     useEffect(() => {
         if (!socket) return;
         const receivePiecesHandler = (receivedPieces, nextTurn, receivedEp, uciMove, timerData) => {
+            preMoveSnapshot.current = null;
             setPieces(receivedPieces);
             setWhoseChanceItIs(nextTurn);
             setEnPassantTarget(receivedEp || null);
@@ -288,6 +315,18 @@ export default function Game() {
     const executeMove = (fromX, fromY, row, col, promotionType) => {
         const movingPiece = pieces.find(p => p.x === fromX && p.y === fromY);
         if (!movingPiece) return;
+
+        preMoveSnapshot.current = {
+            pieces: pieces.map(p => ({ ...p })),
+            whoseChanceItIs,
+            enPassantTarget,
+            halfMoveClock,
+            positionHistory: [...positionHistory],
+            lastMove,
+            moveHistory: [...moveHistory],
+            whiteTime,
+            blackTime,
+        };
 
         const isCapture = !!pieces.find(p => p.x === row && p.y === col);
         const isEnPassant = movingPiece.type === 'pawn' && enPassantTarget &&
